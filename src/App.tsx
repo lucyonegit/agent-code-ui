@@ -21,6 +21,7 @@ function App() {
     // Coding-specific state
     bddFeatures,
     generatedFiles,
+    generatedTree,
     codeSummary,
   } = useChat();
   const [mode, setMode] = useState<AgentMode>('react');
@@ -91,6 +92,7 @@ function App() {
             isLoading={isLoading}
             bddFeatures={bddFeatures}
             generatedFiles={generatedFiles}
+            generatedTree={generatedTree}
             codeSummary={codeSummary}
             onSend={handleSend}
             onCancel={cancel}

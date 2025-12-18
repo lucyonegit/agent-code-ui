@@ -25,6 +25,7 @@ export function useChat() {
   const [bddFeatures, setBddFeatures] = useState<BDDFeature[]>([]);
   const [architectureFiles, setArchitectureFiles] = useState<ArchitectureFile[]>([]);
   const [generatedFiles, setGeneratedFiles] = useState<GeneratedFile[]>([]);
+  const [generatedTree, setGeneratedTree] = useState<any>(null);
   const [codeSummary, setCodeSummary] = useState<string>('');
 
   const abortRef = useRef<(() => void) | null>(null);
@@ -248,7 +249,18 @@ export function useChat() {
     // 处理 code_generated 事件
     if (anyEvent.type === 'code_generated') {
       setGeneratedFiles(anyEvent.files);
+      if (anyEvent.tree) setGeneratedTree(anyEvent.tree);
       setCodeSummary(anyEvent.summary || '');
+      return;
+    }
+
+    // 处理 coding_done 事件
+    if (anyEvent.type === 'coding_done') {
+      if (anyEvent.bddFeatures) setBddFeatures(anyEvent.bddFeatures);
+      if (anyEvent.architecture) setArchitectureFiles(anyEvent.architecture);
+      if (anyEvent.generatedFiles) setGeneratedFiles(anyEvent.generatedFiles);
+      if (anyEvent.tree) setGeneratedTree(anyEvent.tree);
+      if (anyEvent.summary) setCodeSummary(anyEvent.summary);
       return;
     }
 
@@ -260,6 +272,7 @@ export function useChat() {
         setArchitectureFiles(anyEvent.data);
       } else if (anyEvent.phase === 'codegen' && anyEvent.data) {
         setGeneratedFiles(anyEvent.data.files || []);
+        if (anyEvent.data.tree) setGeneratedTree(anyEvent.data.tree);
         setCodeSummary(anyEvent.data.summary || '');
       }
       return;
@@ -322,6 +335,7 @@ export function useChat() {
     setBddFeatures([]);
     setArchitectureFiles([]);
     setGeneratedFiles([]);
+    setGeneratedTree(null);
     setCodeSummary('');
     streamingThoughtRef.current.clear();
     toolCallMapRef.current.clear();
@@ -377,6 +391,7 @@ export function useChat() {
     setBddFeatures([]);
     setArchitectureFiles([]);
     setGeneratedFiles([]);
+    setGeneratedTree(null);
     setCodeSummary('');
 
     abortRef.current = sendCodingMessage(requirement, {
@@ -406,6 +421,7 @@ export function useChat() {
     bddFeatures,
     architectureFiles,
     generatedFiles,
+    generatedTree,
     codeSummary,
     // Actions
     send,

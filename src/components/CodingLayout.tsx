@@ -20,6 +20,7 @@ interface CodingLayoutProps {
   isLoading: boolean;
   bddFeatures: BDDFeature[];
   generatedFiles: GeneratedFile[];
+  generatedTree?: any;
   codeSummary?: string;
   onSend: (message: string) => void;
   onCancel: () => void;
@@ -33,6 +34,7 @@ export function CodingLayout({
   isLoading, 
   bddFeatures, 
   generatedFiles,
+  generatedTree,
   codeSummary,
   onSend,
   onCancel
@@ -121,7 +123,7 @@ export function CodingLayout({
         className="coding-panel code-panel-container"
         style={{ width: `${panelWidths.code}%` }}
       >
-        <CodePanel files={generatedFiles} summary={codeSummary} />
+        <CodePanel files={generatedFiles} tree={generatedTree} summary={codeSummary} />
       </div>
     </div>
   );

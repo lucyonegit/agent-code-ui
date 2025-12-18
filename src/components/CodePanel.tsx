@@ -2,15 +2,17 @@
  * CodePanel - Code directory and preview panel
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { GeneratedFile } from '../types/events';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useTheme } from '../hooks/useTheme';
+import { useWebContainer } from '../hooks/useWebContainer';
 import './CodePanel.css';
 
 interface CodePanelProps {
   files: GeneratedFile[];
+  tree?: any;
   summary?: string;
 }
 
@@ -22,10 +24,19 @@ interface TreeNode {
   content?: string;
 }
 
-export function CodePanel({ files, summary }: CodePanelProps) {
+export function CodePanel({ files, tree, summary }: CodePanelProps) {
   const { isDark } = useTheme();
+  const [activeTab, setActiveTab] = useState<'code' | 'preview'>('code');
   const [selectedFile, setSelectedFile] = useState<GeneratedFile | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set(['src']));
+
+  const { url, status, output, mountAndRun } = useWebContainer();
+
+  useEffect(() => {
+    if (tree && activeTab === 'preview') {
+      mountAndRun(tree);
+    }
+  }, [tree, activeTab, mountAndRun]);
 
   const codeStyle = isDark ? vscDarkPlus : oneLight;
 
@@ -143,65 +154,105 @@ export function CodePanel({ files, summary }: CodePanelProps) {
   return (
     <div className="code-panel">
       <div className="code-panel-header">
-        <h3>生成的代码</h3>
+        <div className="header-left">
+          <h3>项目代码</h3>
+          <div className="panel-tabs">
+            <button 
+              className={`tab-btn ${activeTab === 'code' ? 'active' : ''}`}
+              onClick={() => setActiveTab('code')}
+            >
+              代码
+            </button>
+            <button 
+              className={`tab-btn ${activeTab === 'preview' ? 'active' : ''}`}
+              onClick={() => setActiveTab('preview')}
+            >
+              预览
+            </button>
+          </div>
+        </div>
         <span className="file-count">{files.length} 个文件</span>
       </div>
       
-      {summary && (
+      {summary && activeTab === 'code' && (
         <div className="code-summary">
           <p>{summary}</p>
         </div>
       )}
 
       <div className="code-panel-body">
-        <div className="file-tree">
-          {fileTree.children.map(node => (
-            <TreeItem
-              key={node.path}
-              node={node}
-              depth={0}
-              expandedDirs={expandedDirs}
-              selectedPath={selectedFile ?  
-                (selectedFile.path.startsWith('./') ? selectedFile.path.substring(2) : 
-                 selectedFile.path.startsWith('/') ? selectedFile.path.substring(1) : selectedFile.path) 
-                : undefined}
-              onToggleDir={toggleDir}
-              onSelectFile={selectFile}
-            />
-          ))}
-        </div>
-
-        <div className="code-preview">
-          {selectedFile ? (
-            <>
-              <div className="preview-header">
-                <span className="file-name">{selectedFile.path}</span>
-              </div>
-              <div className="code-content-wrapper">
-                 <SyntaxHighlighter
-                    language={getLanguage(selectedFile.path)}
-                    style={codeStyle}
-                    customStyle={{
-                        margin: 0,
-                        padding: '16px',
-                        background: 'var(--color-bg-secondary)',
-                        fontSize: '12px',
-                        lineHeight: '1.5',
-                        height: '100%'
-                    }}
-                    showLineNumbers={true}
-                    wrapLines={true}
-                 >
-                    {selectedFile.content}
-                 </SyntaxHighlighter>
-              </div>
-            </>
-          ) : (
-            <div className="preview-placeholder">
-              <p>选择文件查看代码</p>
+        {activeTab === 'code' ? (
+          <>
+            <div className="file-tree">
+              {fileTree.children.map(node => (
+                <TreeItem
+                  key={node.path}
+                  node={node}
+                  depth={0}
+                  expandedDirs={expandedDirs}
+                  selectedPath={selectedFile ?  
+                    (selectedFile.path.startsWith('./') ? selectedFile.path.substring(2) : 
+                     selectedFile.path.startsWith('/') ? selectedFile.path.substring(1) : selectedFile.path) 
+                    : undefined}
+                  onToggleDir={toggleDir}
+                  onSelectFile={selectFile}
+                />
+              ))}
             </div>
-          )}
-        </div>
+
+            <div className="code-preview">
+              {selectedFile ? (
+                <>
+                  <div className="preview-header">
+                    <span className="file-name">{selectedFile.path}</span>
+                  </div>
+                  <div className="code-content-wrapper">
+                     <SyntaxHighlighter
+                        language={getLanguage(selectedFile.path)}
+                        style={codeStyle}
+                        customStyle={{
+                            margin: 0,
+                            padding: '16px',
+                            background: 'var(--color-bg-secondary)',
+                            fontSize: '12px',
+                            lineHeight: '1.5',
+                            height: '100%'
+                        }}
+                        showLineNumbers={true}
+                        wrapLines={true}
+                     >
+                        {selectedFile.content}
+                     </SyntaxHighlighter>
+                  </div>
+                </>
+              ) : (
+                <div className="preview-placeholder">
+                  <p>选择文件查看代码</p>
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="runtime-preview">
+            <div className="preview-container">
+              {url ? (
+                <iframe src={url} className="preview-iframe" title="Preview" />
+              ) : (
+                <div className="preview-loading">
+                  <div className="spinner"></div>
+                  <p>{status === 'installing' ? '正在安装依赖...' : 
+                      status === 'running' ? '正在启动开发服务器...' : 
+                      status === 'booting' ? '正在启动容器...' : 
+                      status === 'mounting' ? '正在挂载文件...' : '等待预览启动...'}</p>
+                </div>
+              )}
+            </div>
+            <div className="terminal-container">
+              <div className="terminal-header">终端输出</div>
+              <pre className="terminal-content">{output}</pre>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

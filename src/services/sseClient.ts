@@ -243,6 +243,7 @@ export function sendCodingMessage(
                 const parsed = JSON.parse(currentData);
 
                 if (currentEvent === 'coding_done') {
+                  options.onEvent(parsed as AgentEvent);
                   options.onDone?.(parsed.summary || '');
                 } else {
                   options.onEvent(parsed as AgentEvent);

@@ -276,6 +276,7 @@ export interface ArchitectureGeneratedEvent {
 export interface CodeGeneratedEvent {
   type: 'code_generated';
   files: GeneratedFile[];
+  tree?: any;
   summary: string;
   timestamp: number;
 }
@@ -286,6 +287,7 @@ export interface CodingDoneEvent {
   bddFeatures?: BDDFeature[];
   architecture?: ArchitectureFile[];
   generatedFiles?: GeneratedFile[];
+  tree?: any;
   summary?: string;
   error?: string;
 }
