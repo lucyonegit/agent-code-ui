@@ -1,0 +1,80 @@
+/**
+ * CodingLayout Styles - Resizable Three Panel Layout
+ */
+
+.coding-layout {
+  display: flex;
+  height: 100%;
+  background: var(--color-bg-primary);
+}
+
+.coding-panel {
+  background: var(--color-bg-primary);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* Left chat panel */
+.chat-panel {
+  min-width: 250px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--color-border);
+}
+
+.chat-panel .chat-container {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.chat-panel .chat-input-container {
+  flex-shrink: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Middle BDD panel */
+.bdd-panel-container {
+  min-width: 250px;
+  border-right: 1px solid var(--color-border);
+}
+
+/* Right code panel */
+.code-panel-container {
+  flex: 1;
+  min-width: 250px;
+}
+
+/* Responsive: stack vertically on narrow screens */
+@media (max-width: 1100px) {
+  .coding-layout {
+    flex-direction: column;
+  }
+
+  .coding-panel {
+    width: 100% !important;
+    min-width: 100% !important;
+    height: auto;
+    flex: none;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .chat-panel {
+    height: 350px;
+  }
+
+  .bdd-panel-container,
+  .code-panel-container {
+    height: 400px;
+  }
+
+  /* Hide resize handles on mobile */
+  .resize-handle {
+    display: none;
+  }
+}
+

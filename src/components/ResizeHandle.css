@@ -1,0 +1,40 @@
+/**
+ * ResizeHandle Styles
+ */
+
+.resize-handle {
+  flex-shrink: 0;
+  width: 6px;
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-primary);
+  transition: background 0.15s ease;
+  position: relative;
+  z-index: 10;
+}
+
+.resize-handle:hover,
+.resize-handle.dragging {
+  background: var(--color-bg-secondary);
+}
+
+.resize-handle-line {
+  width: 2px;
+  height: 40px;
+  border-radius: 1px;
+  background: var(--color-border);
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.resize-handle:hover .resize-handle-line,
+.resize-handle.dragging .resize-handle-line {
+  opacity: 1;
+  background: var(--color-text-secondary);
+}
+
+.resize-handle.dragging .resize-handle-line {
+  background: var(--color-accent, #3b82f6);
+}

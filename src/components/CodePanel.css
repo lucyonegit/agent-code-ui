@@ -1,0 +1,154 @@
+.code-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-primary);
+}
+
+.code-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.code-panel-header h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.file-count {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.code-summary {
+  padding: 10px 16px;
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.code-summary p {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.code-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.code-panel-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* File Tree */
+.file-tree {
+  width: 200px;
+  min-width: 160px;
+  height: 100%;
+  flex-shrink: 0;
+  overflow-y: auto;
+  background: var(--color-bg-secondary);
+  border-right: 1px solid var(--color-border);
+  padding: 8px 0;
+}
+
+.tree-item {
+  user-select: none;
+}
+
+.tree-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.tree-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tree-row.selected {
+  background: rgba(74, 222, 128, 0.08);
+}
+
+.folder-indicator {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  transition: transform 0.15s ease;
+  width: 10px;
+  font-weight: 300;
+}
+
+.folder-indicator.expanded {
+  transform: rotate(90deg);
+}
+
+.file-indicator {
+  color: var(--color-text-muted);
+  font-size: 14px;
+  width: 10px;
+  text-align: center;
+}
+
+.node-name {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+}
+
+.tree-row.selected .node-name {
+  color: var(--color-text-primary);
+}
+
+/* Code Preview */
+.code-preview {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.file-name {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+}
+
+.code-content-wrapper {
+  flex: 1;
+  overflow: auto;
+  background: var(--color-bg-secondary);
+}
+
+.preview-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}

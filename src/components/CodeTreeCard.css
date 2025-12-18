@@ -1,0 +1,147 @@
+.code-tree-card {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-left: 2px solid var(--color-accent-primary);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin: 12px 0;
+  max-width: 90%;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.code-tree-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.code-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent-primary);
+}
+
+.code-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-accent-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.file-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.code-summary {
+  margin-bottom: 12px;
+  padding: 8px 10px;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+.code-summary p {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.code-tree-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* File Tree */
+.file-tree {
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  padding: 8px 0;
+  overflow-y: auto;
+}
+
+.tree-item {
+  user-select: none;
+}
+
+.tree-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.tree-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tree-row.selected {
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.folder-indicator {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  transition: transform 0.15s ease;
+  width: 10px;
+  font-weight: 300;
+}
+
+.folder-indicator.expanded {
+  transform: rotate(90deg);
+}
+
+.file-indicator {
+  color: var(--color-text-muted);
+  font-size: 14px;
+  width: 10px;
+  text-align: center;
+}
+
+.node-name {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+}
+
+.tree-row.selected .node-name {
+  color: var(--color-text-primary);
+}
+
+/* Code Preview */
+.code-preview {
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.preview-header {
+  padding: 8px 12px;
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.file-name {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+}
+
+.code-content {
+  max-height: 300px;
+  overflow: auto;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
