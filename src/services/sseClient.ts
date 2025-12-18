@@ -4,7 +4,7 @@
 
 import type { AgentEvent } from '../types/events';
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = 'http://localhost:3002';
 
 export interface SSEClientOptions {
   onEvent: (event: AgentEvent) => void;
