@@ -2,7 +2,7 @@
  * CodePanel - Code directory and preview panel
  */
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import type { GeneratedFile } from '../types/events';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -30,13 +30,25 @@ export function CodePanel({ files, tree, summary }: CodePanelProps) {
   const [selectedFile, setSelectedFile] = useState<GeneratedFile | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set(['src']));
 
-  const { url, status, output, mountAndRun } = useWebContainer();
+  const { url, status, output, refreshKey, mountAndRun, remount } = useWebContainer();
+  
+  // 跟踪之前的 tree 以区分首次挂载和后续更新
+  const prevTreeRef = useRef<any>(null);
+  const isFirstMountRef = useRef(true);
 
   useEffect(() => {
-    if (tree && activeTab === 'preview') {
-      mountAndRun(tree);
+    if (tree) {
+      if (isFirstMountRef.current) {
+        // 首次挂载：完整安装依赖并启动服务器
+        mountAndRun(tree);
+        isFirstMountRef.current = false;
+      } else if (tree !== prevTreeRef.current) {
+        // 后续更新：使用增量更新，利用 Vite HMR
+        remount(tree, prevTreeRef.current);
+      }
+      prevTreeRef.current = tree;
     }
-  }, [tree, activeTab, mountAndRun]);
+  }, [tree, mountAndRun, remount]);
 
   const codeStyle = isDark ? vscDarkPlus : oneLight;
 
@@ -236,7 +248,7 @@ export function CodePanel({ files, tree, summary }: CodePanelProps) {
           <div className="runtime-preview">
             <div className="preview-container">
               {url ? (
-                <iframe src={url} className="preview-iframe" title="Preview" />
+                <iframe key={refreshKey} src={url} className="preview-iframe" title="Preview" />
               ) : (
                 <div className="preview-loading">
                   <div className="spinner"></div>
