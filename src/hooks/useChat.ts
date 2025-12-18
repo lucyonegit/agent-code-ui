@@ -387,14 +387,15 @@ export function useChat() {
     setIsLoading(true);
     streamingThoughtRef.current.clear();
 
-    // 清空 Coding 专用状态
+    // 保留现有文件作为上下文，不进行清空
+    // setGeneratedFiles([]); // Removed: Do not clear files to support multi-turn
     setBddFeatures([]);
     setArchitectureFiles([]);
-    setGeneratedFiles([]);
     setGeneratedTree(null);
     setCodeSummary('');
 
-    abortRef.current = sendCodingMessage(requirement, {
+    // Pass generatedFiles to sendCodingMessage
+    abortRef.current = sendCodingMessage(requirement, generatedFiles, {
       onEvent: handleCodingEvent,
       onDone: () => {
         setIsLoading(false);
@@ -411,7 +412,7 @@ export function useChat() {
         setMessages(prev => [...prev, errorItem]);
       },
     });
-  }, [isLoading, handleCodingEvent]);
+  }, [isLoading, handleCodingEvent, generatedFiles]); // Added generatedFiles dependency
 
   return {
     messages,

@@ -195,6 +195,7 @@ export function sendPlannerMessage(
  */
 export function sendCodingMessage(
   requirement: string,
+  files: any[] | undefined,
   options: SSEClientOptions
 ): () => void {
   const abortController = new AbortController();
@@ -206,7 +207,7 @@ export function sendCodingMessage(
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ requirement }),
+        body: JSON.stringify({ requirement, files }),
         signal: abortController.signal,
       });
 
