@@ -152,7 +152,22 @@ export function useWebContainer() {
         // 触发 iframe 强制刷新
         setRefreshKey(prev => prev + 1);
       } else {
-        // 服务器未运行，需要启动
+        // 服务器未运行，需要先安装依赖再启动
+        setStatus('installing');
+        appendOutput('Installing dependencies...\n');
+        const installProcess = await webcontainerRef.current.spawn('npm', ['install']);
+
+        installProcess.output.pipeTo(new WritableStream({
+          write(data) {
+            appendOutput(data);
+          }
+        }));
+
+        const installCode = await installProcess.exit;
+        if (installCode !== 0) {
+          throw new Error(`Installation failed with code ${installCode}`);
+        }
+
         setStatus('running');
         appendOutput('Starting dev server...\n');
         const devProcess = await webcontainerRef.current.spawn('npm', ['run', 'dev']);
