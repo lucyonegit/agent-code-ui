@@ -52,7 +52,7 @@ function parseTreeToFiles(tree: any, basePath: string = ''): GeneratedFile[] {
   return files;
 }
 
-export function CodePanel({ files, tree, summary, projectId, onLoadProject }: CodePanelProps) {
+export function CodePanel({ files, tree, summary }: CodePanelProps) {
   const { isDark } = useTheme();
   const [activeTab, setActiveTab] = useState<'code' | 'preview'>('code');
   const [selectedFile, setSelectedFile] = useState<GeneratedFile | null>(null);
@@ -220,12 +220,6 @@ export function CodePanel({ files, tree, summary, projectId, onLoadProject }: Co
           </div>
         </div>
         <div className="header-right">
-          {onLoadProject && (
-            <ProjectSelector
-              onSelectProject={onLoadProject}
-              currentProjectId={projectId}
-            />
-          )}
           <span className="file-count">{displayFiles.length} 个文件</span>
         </div>
       </div>
