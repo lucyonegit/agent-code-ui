@@ -316,6 +316,7 @@ export interface CodeGeneratedEvent {
   files: GeneratedFile[];
   tree?: any;
   summary: string;
+  projectId?: string;
   timestamp: number;
 }
 
@@ -327,6 +328,7 @@ export interface CodingDoneEvent {
   generatedFiles?: GeneratedFile[];
   tree?: any;
   summary?: string;
+  projectId?: string;
   error?: string;
 }
 

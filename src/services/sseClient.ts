@@ -272,3 +272,98 @@ export function sendCodingMessage(
   return () => abortController.abort();
 }
 
+// ============================================================================
+// 项目管理 API
+// ============================================================================
+
+export interface ProjectInfo {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  path: string;
+}
+
+export interface ProjectDetail extends ProjectInfo {
+  tree: unknown;
+}
+
+/**
+ * 获取项目列表
+ */
+export async function getProjects(): Promise<ProjectInfo[]> {
+  try {
+    const response = await fetch(`${API_BASE}/api/projects`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data.projects || [];
+  } catch (error) {
+    console.error('Failed to fetch projects:', error);
+    return [];
+  }
+}
+
+/**
+ * 获取项目详情（包含文件树）
+ */
+export async function getProject(projectId: string): Promise<ProjectDetail | null> {
+  try {
+    const response = await fetch(`${API_BASE}/api/projects/${projectId}`);
+    if (!response.ok) {
+      if (response.status === 404) return null;
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to fetch project:', error);
+    return null;
+  }
+}
+
+/**
+ * 持久化临时项目
+ */
+export async function persistProject(
+  projectId: string,
+  name?: string
+): Promise<{ success: boolean; projectId?: string; error?: string }> {
+  try {
+    const response = await fetch(`${API_BASE}/api/projects/${projectId}/persist`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      return { success: false, error: data.error || 'Unknown error' };
+    }
+    const data = await response.json();
+    return { success: true, projectId: data.projectId };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return { success: false, error: message };
+  }
+}
+
+/**
+ * 删除项目
+ */
+export async function deleteProject(
+  projectId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await fetch(`${API_BASE}/api/projects/${projectId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      return { success: false, error: data.error || 'Unknown error' };
+    }
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return { success: false, error: message };
+  }
+}

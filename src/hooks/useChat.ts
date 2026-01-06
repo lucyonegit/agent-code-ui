@@ -31,6 +31,7 @@ export function useChat() {
   const [generatedFiles, setGeneratedFiles] = useState<GeneratedFile[]>([]);
   const [generatedTree, setGeneratedTree] = useState<unknown>(null);
   const [codeSummary, setCodeSummary] = useState<string>('');
+  const [projectId, setProjectId] = useState<string | undefined>(undefined);
 
   const abortRef = useRef<(() => void) | null>(null);
   const streamingThoughtRef = useRef<Map<string, ChatItem>>(new Map());
@@ -261,6 +262,7 @@ export function useChat() {
       setGeneratedFiles(anyEvent.files);
       if (anyEvent.tree) setGeneratedTree(anyEvent.tree);
       setCodeSummary(anyEvent.summary || '');
+      if (anyEvent.projectId) setProjectId(anyEvent.projectId);
       return;
     }
 
@@ -271,6 +273,7 @@ export function useChat() {
       if (anyEvent.generatedFiles) setGeneratedFiles(anyEvent.generatedFiles);
       if (anyEvent.tree) setGeneratedTree(anyEvent.tree);
       if (anyEvent.summary) setCodeSummary(anyEvent.summary);
+      if (anyEvent.projectId) setProjectId(anyEvent.projectId);
       return;
     }
 
@@ -367,6 +370,16 @@ export function useChat() {
     setMessageHistory([]);
   }, []);
 
+  // 加载已保存的项目
+  const loadProject = useCallback((tree: unknown, id: string, name: string) => {
+    setGeneratedTree(tree);
+    setProjectId(id);
+    setCodeSummary(`已加载项目: ${name}`);
+    // 清空 BDD 和架构（因为加载的是已保存项目）
+    setBddFeatures([]);
+    setArchitectureFiles([]);
+  }, []);
+
   const sendPlanner = useCallback((goal: string) => {
     if (!goal.trim() || isLoading) return;
 
@@ -451,6 +464,7 @@ export function useChat() {
     generatedFiles,
     generatedTree,
     codeSummary,
+    projectId,
     // Actions
     send,
     sendPlanner,
@@ -458,5 +472,6 @@ export function useChat() {
     cancel,
     clear,
     clearHistory,
+    loadProject,
   };
 }

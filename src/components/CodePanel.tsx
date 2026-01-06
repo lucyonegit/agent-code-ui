@@ -12,7 +12,7 @@ import './CodePanel.css';
 
 interface CodePanelProps {
   files: GeneratedFile[];
-  tree?: any;
+  tree?: unknown;
   summary?: string;
 }
 
@@ -52,7 +52,7 @@ function parseTreeToFiles(tree: any, basePath: string = ''): GeneratedFile[] {
   return files;
 }
 
-export function CodePanel({ files, tree, summary }: CodePanelProps) {
+export function CodePanel({ files, tree, summary, projectId, onLoadProject }: CodePanelProps) {
   const { isDark } = useTheme();
   const [activeTab, setActiveTab] = useState<'code' | 'preview'>('code');
   const [selectedFile, setSelectedFile] = useState<GeneratedFile | null>(null);
@@ -219,7 +219,15 @@ export function CodePanel({ files, tree, summary }: CodePanelProps) {
             </button>
           </div>
         </div>
-        <span className="file-count">{displayFiles.length} 个文件</span>
+        <div className="header-right">
+          {onLoadProject && (
+            <ProjectSelector
+              onSelectProject={onLoadProject}
+              currentProjectId={projectId}
+            />
+          )}
+          <span className="file-count">{displayFiles.length} 个文件</span>
+        </div>
       </div>
       
       {summary && activeTab === 'code' && (

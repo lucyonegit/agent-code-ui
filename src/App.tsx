@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { ChatContainer } from './components/ChatContainer';
 import { ChatInput } from './components/ChatInput';
 import { CodingLayout } from './components/CodingLayout';
+import { ProjectSelector } from './components/ProjectSelector';
 import { useChat } from './hooks/useChat';
 import { useTheme } from './hooks/useTheme';
 import './App.css';
@@ -23,6 +24,8 @@ function App() {
     generatedFiles,
     generatedTree,
     codeSummary,
+    projectId,
+    loadProject,
   } = useChat();
   const [mode, setMode] = useState<AgentMode>('react');
   const { theme, toggleTheme } = useTheme();
@@ -36,6 +39,11 @@ function App() {
       send(input);
     }
   };
+
+  const handleLoadProject = useCallback((tree: unknown, id: string, name: string) => {
+    loadProject(tree, id, name);
+    setMode('coding');
+  }, [loadProject]);
 
   return (
     <div className={`app ${mode === 'coding' ? 'coding-mode' : ''}`}>
@@ -61,6 +69,12 @@ function App() {
             >
               编程模式
             </button>
+          </div>
+          <div className="project-selection">
+            <ProjectSelector
+              onSelectProject={handleLoadProject}
+              currentProjectId={projectId}
+            />
           </div>
         </div>
         <div className="header-right">
