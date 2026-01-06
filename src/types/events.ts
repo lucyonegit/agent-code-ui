@@ -156,6 +156,43 @@ export interface StepCompleteEvent {
 }
 
 // ============================================================================
+// 统一消息格式（用于多轮对话历史同步）
+// ============================================================================
+
+/**
+ * 工具调用结构
+ */
+export interface UnifiedToolCall {
+  id: string;
+  name: string;
+  args: Record<string, unknown>;
+}
+
+/**
+ * 统一消息格式 - 前后端共用
+ */
+export interface UnifiedMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'tool' | 'system';
+  timestamp: number;
+  content?: string;
+  toolCalls?: UnifiedToolCall[];
+  toolCallId?: string;
+  toolName?: string;
+  toolResult?: unknown;
+  success?: boolean;
+}
+
+/**
+ * 消息同步事件 - 用于前后端历史同步
+ */
+export interface MessageSyncEvent {
+  type: 'message_sync';
+  message: UnifiedMessage;
+  timestamp: number;
+}
+
+// ============================================================================
 // Agent 事件联合类型
 // ============================================================================
 
@@ -169,6 +206,7 @@ export type AgentEvent =
   | NormalMessageEvent
   | StepStartEvent
   | StepCompleteEvent
+  | MessageSyncEvent
   // 向后兼容
   | StreamEvent
   | ActionEvent

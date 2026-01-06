@@ -24,6 +24,34 @@ interface TreeNode {
   content?: string;
 }
 
+/**
+ * 将 WebContainerTree 转换为扁平的 GeneratedFile 数组
+ * WebContainerTree 结构: { "filename": { file: { contents: "..." } }, "dirname": { directory: { ... } } }
+ */
+function parseTreeToFiles(tree: any, basePath: string = ''): GeneratedFile[] {
+  const files: GeneratedFile[] = [];
+  
+  if (!tree || typeof tree !== 'object') return files;
+  
+  for (const key of Object.keys(tree)) {
+    const node = tree[key];
+    const currentPath = basePath ? `${basePath}/${key}` : key;
+    
+    if (node.file && typeof node.file.contents === 'string') {
+      // 这是一个文件
+      files.push({
+        path: currentPath,
+        content: node.file.contents,
+      });
+    } else if (node.directory && typeof node.directory === 'object') {
+      // 这是一个目录，递归处理
+      files.push(...parseTreeToFiles(node.directory, currentPath));
+    }
+  }
+  
+  return files;
+}
+
 export function CodePanel({ files, tree, summary }: CodePanelProps) {
   const { isDark } = useTheme();
   const [activeTab, setActiveTab] = useState<'code' | 'preview'>('code');
@@ -52,11 +80,19 @@ export function CodePanel({ files, tree, summary }: CodePanelProps) {
 
   const codeStyle = isDark ? vscDarkPlus : oneLight;
 
+  // 优先使用 tree 解析的完整文件列表（包含 package.json 等），否则使用 files 属性
+  const displayFiles = useMemo(() => {
+    if (tree && typeof tree === 'object' && Object.keys(tree).length > 0) {
+      return parseTreeToFiles(tree);
+    }
+    return files;
+  }, [tree, files]);
+
   // Build file tree from flat file list
   const fileTree = useMemo(() => {
     const root: TreeNode = { name: '', path: '', isDir: true, children: [] };
 
-    files.forEach(file => {
+    displayFiles.forEach(file => {
       let normalizedPath = file.path;
       if (normalizedPath.startsWith('./')) {
         normalizedPath = normalizedPath.substring(2);
@@ -97,7 +133,7 @@ export function CodePanel({ files, tree, summary }: CodePanelProps) {
     sortTree(root);
 
     return root;
-  }, [files]);
+  }, [displayFiles]);
 
   const toggleDir = (path: string) => {
     setExpandedDirs(prev => {
@@ -113,7 +149,7 @@ export function CodePanel({ files, tree, summary }: CodePanelProps) {
 
   const selectFile = (node: TreeNode) => {
     if (!node.isDir) {
-      const file = files.find(f => {
+      const file = displayFiles.find(f => {
          let normalizedPath = f.path;
          if (normalizedPath.startsWith('./')) {
             normalizedPath = normalizedPath.substring(2);
@@ -126,7 +162,7 @@ export function CodePanel({ files, tree, summary }: CodePanelProps) {
     }
   };
 
-  if (files.length === 0) {
+  if (displayFiles.length === 0) {
     return (
       <div className="code-panel">
         <div className="code-panel-header">
@@ -183,7 +219,7 @@ export function CodePanel({ files, tree, summary }: CodePanelProps) {
             </button>
           </div>
         </div>
-        <span className="file-count">{files.length} 个文件</span>
+        <span className="file-count">{displayFiles.length} 个文件</span>
       </div>
       
       {summary && activeTab === 'code' && (

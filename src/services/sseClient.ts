@@ -2,7 +2,7 @@
  * SSE Client for connecting to base-agent server
  */
 
-import type { AgentEvent } from '../types/events';
+import type { AgentEvent, UnifiedMessage } from '../types/events';
 
 const API_BASE = 'http://localhost:3002';
 
@@ -18,6 +18,7 @@ export interface SSEClientOptions {
 export function sendMessage(
   input: string,
   tools: string[],
+  history: UnifiedMessage[],
   options: SSEClientOptions
 ): () => void {
   const abortController = new AbortController();
@@ -29,7 +30,7 @@ export function sendMessage(
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ input, tools }),
+        body: JSON.stringify({ input, tools, history }),
         signal: abortController.signal,
       });
 

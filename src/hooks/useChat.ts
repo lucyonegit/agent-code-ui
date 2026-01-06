@@ -12,7 +12,8 @@ import type {
   ToolInfo,
   BDDFeature,
   GeneratedFile,
-  ArchitectureFile
+  ArchitectureFile,
+  UnifiedMessage,
 } from '../types/events';
 import { sendMessage, sendPlannerMessage, sendCodingMessage, getTools } from '../services/sseClient';
 
@@ -21,11 +22,14 @@ export function useChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [tools, setTools] = useState<ToolInfo[]>([]);
 
+  // 统一消息历史（用于多轮对话同步）
+  const [messageHistory, setMessageHistory] = useState<UnifiedMessage[]>([]);
+
   // Coding-specific state (for three-panel layout)
   const [bddFeatures, setBddFeatures] = useState<BDDFeature[]>([]);
   const [architectureFiles, setArchitectureFiles] = useState<ArchitectureFile[]>([]);
   const [generatedFiles, setGeneratedFiles] = useState<GeneratedFile[]>([]);
-  const [generatedTree, setGeneratedTree] = useState<any>(null);
+  const [generatedTree, setGeneratedTree] = useState<unknown>(null);
   const [codeSummary, setCodeSummary] = useState<string>('');
 
   const abortRef = useRef<(() => void) | null>(null);
@@ -227,6 +231,12 @@ export function useChat() {
         setMessages(prev => [...prev, item]);
         break;
       }
+
+      // === 消息同步事件（用于多轮对话历史累积） ===
+      case 'message_sync': {
+        setMessageHistory(prev => [...prev, event.message]);
+        break;
+      }
     }
   }, []);
 
@@ -291,6 +301,15 @@ export function useChat() {
   const send = useCallback((input: string) => {
     if (!input.trim() || isLoading) return;
 
+    // 添加用户消息到历史
+    const userUnifiedMsg: UnifiedMessage = {
+      id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+      role: 'user',
+      content: input,
+      timestamp: Date.now(),
+    };
+    setMessageHistory(prev => [...prev, userUnifiedMsg]);
+
     const userMessage: ChatItem = {
       id: `user_${Date.now()}`,
       type: 'user',
@@ -303,7 +322,9 @@ export function useChat() {
     toolCallMapRef.current.clear();
 
     const toolNames = tools.map(t => t.name);
-    abortRef.current = sendMessage(input, toolNames, {
+    // 传递历史消息用于多轮对话
+    const historyToSend = [...messageHistory, userUnifiedMsg];
+    abortRef.current = sendMessage(input, toolNames, historyToSend, {
       onEvent: handleEvent,
       onDone: () => {
         setIsLoading(false);
@@ -320,7 +341,7 @@ export function useChat() {
         setMessages(prev => [...prev, errorItem]);
       },
     });
-  }, [isLoading, tools, handleEvent]);
+  }, [isLoading, tools, handleEvent, messageHistory]);
 
   const cancel = useCallback(() => {
     if (abortRef.current) {
@@ -332,6 +353,7 @@ export function useChat() {
 
   const clear = useCallback(() => {
     setMessages([]);
+    setMessageHistory([]);
     setBddFeatures([]);
     setArchitectureFiles([]);
     setGeneratedFiles([]);
@@ -339,6 +361,10 @@ export function useChat() {
     setCodeSummary('');
     streamingThoughtRef.current.clear();
     toolCallMapRef.current.clear();
+  }, []);
+
+  const clearHistory = useCallback(() => {
+    setMessageHistory([]);
   }, []);
 
   const sendPlanner = useCallback((goal: string) => {
@@ -416,6 +442,7 @@ export function useChat() {
 
   return {
     messages,
+    messageHistory,
     isLoading,
     tools,
     // Coding-specific state
@@ -430,5 +457,6 @@ export function useChat() {
     sendCoding,
     cancel,
     clear,
+    clearHistory,
   };
 }
