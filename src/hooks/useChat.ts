@@ -433,14 +433,14 @@ export function useChat() {
     setGeneratedTree(null);
     setCodeSummary('');
 
-    // Pass generatedFiles to sendCodingMessage
-    abortRef.current = sendCodingMessage(requirement, generatedFiles, {
+    // Pass only projectId - backend will auto-load project files
+    abortRef.current = sendCodingMessage(requirement, projectId, {
       onEvent: handleCodingEvent,
       onDone: () => {
         setIsLoading(false);
         streamingThoughtRef.current.clear();
       },
-      onError: (error) => {
+      onError: (error: string) => {
         setIsLoading(false);
         const errorItem: ChatItem = {
           id: `error_${Date.now()}`,
@@ -451,7 +451,7 @@ export function useChat() {
         setMessages(prev => [...prev, errorItem]);
       },
     });
-  }, [isLoading, handleCodingEvent, generatedFiles]); // Added generatedFiles dependency
+  }, [isLoading, handleCodingEvent, projectId]);
 
   return {
     messages,

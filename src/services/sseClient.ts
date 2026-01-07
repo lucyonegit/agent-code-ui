@@ -193,10 +193,11 @@ export function sendPlannerMessage(
 
 /**
  * Send a requirement to the Coding agent via SSE
+ * Backend will auto-load project files when projectId is provided
  */
 export function sendCodingMessage(
   requirement: string,
-  files: any[] | undefined,
+  projectId: string | undefined,
   options: SSEClientOptions
 ): () => void {
   const abortController = new AbortController();
@@ -208,7 +209,7 @@ export function sendCodingMessage(
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ requirement, files }),
+        body: JSON.stringify({ requirement, projectId }),
         signal: abortController.signal,
       });
 
@@ -223,6 +224,7 @@ export function sendCodingMessage(
 
       const decoder = new TextDecoder();
       let buffer = '';
+      let doneReceived = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -247,6 +249,7 @@ export function sendCodingMessage(
                 if (currentEvent === 'coding_done') {
                   options.onEvent(parsed as AgentEvent);
                   options.onDone?.(parsed.summary || '');
+                  doneReceived = true;
                 } else {
                   options.onEvent(parsed as AgentEvent);
                 }
@@ -258,6 +261,12 @@ export function sendCodingMessage(
             }
           }
         }
+      }
+      
+      // Stream 结束后，如果没收到 coding_done 事件，也调用 onDone
+      if (!doneReceived) {
+        console.log('[SSE] Stream ended without coding_done event, calling onDone');
+        options.onDone?.('');
       }
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
