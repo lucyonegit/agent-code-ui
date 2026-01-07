@@ -1,6 +1,27 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { WebContainer } from '@webcontainer/api';
 
+/**
+ * 移除 ANSI 转义序列和控制字符
+ * 包括颜色代码、光标控制、清屏等
+ */
+function stripAnsi(str: string): string {
+  // 使用 String.fromCharCode 构建控制字符，避免 ESLint no-control-regex 错误
+  const ESC = String.fromCharCode(27); // \x1b
+  const BEL = String.fromCharCode(7);  // \x07
+  
+  // 匹配 ANSI 转义序列:
+  // ESC[ 开头，后跟参数和命令字符 (CSI sequences)
+  // ESC] 开头的 OSC sequences，以 BEL 结尾
+   
+  const ansiRegex = new RegExp(`${ESC}\\[[0-9;]*[a-zA-Z]|${ESC}\\][^${BEL}]*${BEL}`, 'g');
+  
+  // 移除回车符（用于进度条覆盖），保留换行符
+  return str
+    .replace(ansiRegex, '')
+    .replace(/\r(?!\n)/g, '\n'); // 单独的 \r 替换为 \n 以保持可读性
+}
+
 export function useWebContainer() {
   const webcontainerRef = useRef<WebContainer | null>(null);
   const [url, setUrl] = useState<string | null>(null);
@@ -11,7 +32,9 @@ export function useWebContainer() {
   const isServerRunningRef = useRef(false);
 
   const appendOutput = (data: string) => {
-    setOutput(prev => prev + data);
+    // 过滤 ANSI 转义序列后再添加到输出
+    const cleanData = stripAnsi(data);
+    setOutput(prev => prev + cleanData);
   };
 
   const boot = useCallback(async () => {
