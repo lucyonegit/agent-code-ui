@@ -1,5 +1,5 @@
 /**
- * CodingLayout Styles - Resizable Three Panel Layout
+ * CodingLayout Styles - Resizable Two Panel Layout
  */
 
 .coding-layout {
@@ -19,7 +19,7 @@
 
 /* Left chat panel */
 .chat-panel {
-  min-width: 250px;
+  min-width: 300px;
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--color-border);
@@ -36,20 +36,14 @@
   border-top: 1px solid var(--color-border);
 }
 
-/* Middle BDD panel */
-.bdd-panel-container {
-  min-width: 250px;
-  border-right: 1px solid var(--color-border);
-}
-
 /* Right code panel */
 .code-panel-container {
   flex: 1;
-  min-width: 250px;
+  min-width: 300px;
 }
 
 /* Responsive: stack vertically on narrow screens */
-@media (max-width: 1100px) {
+@media (max-width: 900px) {
   .coding-layout {
     flex-direction: column;
   }
@@ -67,9 +61,8 @@
     height: 350px;
   }
 
-  .bdd-panel-container,
   .code-panel-container {
-    height: 400px;
+    height: 450px;
   }
 
   /* Hide resize handles on mobile */
