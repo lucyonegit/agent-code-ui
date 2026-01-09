@@ -15,7 +15,7 @@ import type {
   ArchitectureFile,
   UnifiedMessage,
 } from '../types/events';
-import { sendMessage, sendPlannerMessage, sendCodingMessage, getTools } from '../services/sseClient';
+import { sendMessage, sendPlannerMessage, sendCodingMessage, getTools, type StoredMessage } from '../services/sseClient';
 
 export function useChat() {
   const [messages, setMessages] = useState<ChatItem[]>([]);
@@ -371,13 +371,36 @@ export function useChat() {
   }, []);
 
   // 加载已保存的项目
-  const loadProject = useCallback((tree: unknown, id: string, name: string) => {
+  const loadProject = useCallback((tree: unknown, id: string, name: string, conversation?: StoredMessage[]) => {
     setGeneratedTree(tree);
     setProjectId(id);
     setCodeSummary(`已加载项目: ${name}`);
     // 清空 BDD 和架构（因为加载的是已保存项目）
     setBddFeatures([]);
     setArchitectureFiles([]);
+
+    // 恢复对话历史
+    if (conversation && conversation.length > 0) {
+      const chatItems: ChatItem[] = conversation.map(msg => ({
+        id: msg.id,
+        type: msg.type as ChatItem['type'],
+        content: msg.content,
+        timestamp: msg.timestamp,
+        // 工具调用相关字段
+        toolCallId: msg.toolCallId,
+        toolName: msg.toolName,
+        args: msg.args,
+        result: msg.result,
+        success: msg.success,
+        duration: msg.duration,
+        // 流式状态
+        isStreaming: msg.isStreaming,
+        isComplete: msg.isComplete,
+      }));
+      setMessages(chatItems);
+    } else {
+      setMessages([]);
+    }
   }, []);
 
   const sendPlanner = useCallback((goal: string) => {

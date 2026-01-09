@@ -262,7 +262,7 @@ export function sendCodingMessage(
           }
         }
       }
-      
+
       // Stream 结束后，如果没收到 coding_done 事件，也调用 onDone
       if (!doneReceived) {
         console.log('[SSE] Stream ended without coding_done event, calling onDone');
@@ -295,6 +295,27 @@ export interface ProjectInfo {
 
 export interface ProjectDetail extends ProjectInfo {
   tree: unknown;
+  conversation?: StoredMessage[];
+}
+
+/**
+ * 存储的消息类型（与后端和 ChatItem 保持一致）
+ */
+export interface StoredMessage {
+  id: string;
+  type: 'user' | 'thought' | 'normal_message' | 'tool_call' | 'final_result' | 'error';
+  content: string;
+  timestamp: number;
+  // 工具调用相关 (type === 'tool_call' 时使用)
+  toolCallId?: string;
+  toolName?: string;
+  args?: Record<string, unknown>;
+  result?: string;
+  success?: boolean;
+  duration?: number;
+  // 流式状态
+  isStreaming?: boolean;
+  isComplete?: boolean;
 }
 
 /**

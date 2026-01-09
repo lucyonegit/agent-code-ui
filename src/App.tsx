@@ -5,6 +5,7 @@ import { CodingLayout } from './components/CodingLayout';
 import { ProjectSelector } from './components/ProjectSelector';
 import { useChat } from './hooks/useChat';
 import { useTheme } from './hooks/useTheme';
+import type { StoredMessage } from './services/sseClient';
 import './App.css';
 
 type AgentMode = 'react' | 'planner' | 'coding';
@@ -40,8 +41,8 @@ function App() {
     }
   };
 
-  const handleLoadProject = useCallback((tree: unknown, id: string, name: string) => {
-    loadProject(tree, id, name);
+  const handleLoadProject = useCallback((tree: unknown, id: string, name: string, conversation?: StoredMessage[]) => {
+    loadProject(tree, id, name, conversation);
     setMode('coding');
   }, [loadProject]);
 

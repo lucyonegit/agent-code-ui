@@ -4,11 +4,11 @@
  */
 
 import { useState, useEffect } from 'react';
-import { getProjects, getProject, deleteProject, type ProjectInfo } from '../services/sseClient';
+import { getProjects, getProject, deleteProject, type ProjectInfo, type StoredMessage } from '../services/sseClient';
 import './ProjectSelector.css';
 
 interface ProjectSelectorProps {
-  onSelectProject: (tree: unknown, projectId: string, projectName: string) => void;
+  onSelectProject: (tree: unknown, projectId: string, projectName: string, conversation?: StoredMessage[]) => void;
   currentProjectId?: string;
 }
 
@@ -42,7 +42,7 @@ export function ProjectSelector({ onSelectProject, currentProjectId }: ProjectSe
     try {
       const detail = await getProject(project.id);
       if (detail && detail.tree) {
-        onSelectProject(detail.tree, project.id, project.name);
+        onSelectProject(detail.tree, project.id, project.name, detail.conversation);
         setIsOpen(false);
       }
     } finally {
