@@ -46,6 +46,9 @@ export function sendMessage(
       const decoder = new TextDecoder();
       let buffer = '';
 
+      let currentEvent = '';
+      let currentData = '';
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -53,9 +56,6 @@ export function sendMessage(
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
-
-        let currentEvent = '';
-        let currentData = '';
 
         for (const line of lines) {
           if (line.startsWith('event: ')) {
@@ -144,6 +144,9 @@ export function sendPlannerMessage(
       const decoder = new TextDecoder();
       let buffer = '';
 
+      let currentEvent = '';
+      let currentData = '';
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -151,9 +154,6 @@ export function sendPlannerMessage(
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
-
-        let currentEvent = '';
-        let currentData = '';
 
         for (const line of lines) {
           if (line.startsWith('event: ')) {
@@ -226,6 +226,9 @@ export function sendCodingMessage(
       let buffer = '';
       let doneReceived = false;
 
+      let currentEvent = '';
+      let currentData = '';
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -233,9 +236,6 @@ export function sendCodingMessage(
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
-
-        let currentEvent = '';
-        let currentData = '';
 
         for (const line of lines) {
           if (line.startsWith('event: ')) {
