@@ -6,7 +6,10 @@ import { ProjectSelector } from './components/ProjectSelector';
 import { useChat } from './hooks/useChat';
 import { useTheme } from './hooks/useTheme';
 import type { StoredMessage } from './services/sseClient';
-import './App.css';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Moon, Sun } from 'lucide-react';
 
 type AgentMode = 'react' | 'planner' | 'coding';
 
@@ -47,60 +50,49 @@ function App() {
   }, [loadProject]);
 
   return (
-    <div className={`app ${mode === 'coding' ? 'coding-mode' : ''}`}>
-      <header className="app-header">
-        <div className="header-left">
-          <h1>Agent</h1>
-          <div className="mode-toggle">
-            <button 
-              className={`mode-btn ${mode === 'react' ? 'active' : ''}`}
-              onClick={() => setMode('react')}
-            >
-              推理模式
-            </button>
-            <button 
-              className={`mode-btn ${mode === 'planner' ? 'active' : ''}`}
-              onClick={() => setMode('planner')}
-            >
-              规划模式
-            </button>
-            <button 
-              className={`mode-btn ${mode === 'coding' ? 'active' : ''}`}
-              onClick={() => setMode('coding')}
-            >
-              编程模式
-            </button>
+    <div className={/* `app ${mode === 'coding' ? 'coding-mode' : ''}` */ "flex flex-col h-screen bg-background"}>
+      <header className="flex items-center justify-between px-6 py-3 bg-card border-b border-border">
+        <div className="flex items-center gap-6">
+          <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mr-8">Agent</h1>
+          <div className="flex-1 flex justify-center">
+            <Tabs value={mode} onValueChange={(v) => setMode(v as AgentMode)} className="w-[400px]">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="react">推理模式</TabsTrigger>
+                <TabsTrigger value="planner">规划模式</TabsTrigger>
+                <TabsTrigger value="coding">编程模式</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
-          <div className="project-selection">
+          <div className="ml-2 pl-5 border-l border-border">
             <ProjectSelector
               onSelectProject={handleLoadProject}
               currentProjectId={projectId}
             />
           </div>
         </div>
-        <div className="header-right">
-          <button 
-            className="theme-toggle" 
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="ghost" 
+            size="icon"
             onClick={toggleTheme}
             title={theme === 'dark' ? '切换到亮色主题' : '切换到暗色主题'}
           >
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
+            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </Button>
           {tools.length > 0 && (
-            <div className="tools-badge">
-              <span className="tools-icon">●</span>
-              <span>{tools.length} 个工具</span>
-            </div>
+            <Badge variant="secondary" className="ml-2">
+              {tools.length} 个工具
+            </Badge>
           )}
           {messages.length > 0 && (
-            <button className="clear-button" onClick={clear}>
+            <Button variant="ghost" size="sm" onClick={clear} className="ml-2">
               清除
-            </button>
+            </Button>
           )}
         </div>
       </header>
       
-      <main className="app-main">
+      <main className="flex-1 overflow-hidden w-full max-w-5xl mx-auto flex flex-col data-[mode=coding]:max-w-none" data-mode={mode}>
         {mode === 'coding' ? (
           <CodingLayout
             messages={messages}
@@ -118,7 +110,7 @@ function App() {
       </main>
       
       {mode !== 'coding' && (
-        <footer className="app-footer">
+        <footer className="w-full max-w-5xl mx-auto px-6 pb-6">
           <ChatInput 
             onSend={handleSend} 
             isLoading={isLoading} 

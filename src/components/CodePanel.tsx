@@ -5,10 +5,11 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import type { GeneratedFile } from '../types/events';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { cn } from '@/lib/utils';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTheme } from '../hooks/useTheme';
 import { useWebContainer } from '../hooks/useWebContainer';
-import './CodePanel.css';
 
 interface CodePanelProps {
   files: GeneratedFile[];
@@ -78,7 +79,34 @@ export function CodePanel({ files, tree, summary }: CodePanelProps) {
     }
   }, [tree, mountAndRun, remount]);
 
-  const codeStyle = isDark ? vscDarkPlus : oneLight;
+  // 创建自定义主题，统一字体设置
+  const customFontFamily = 'Menlo, Monaco, Consolas, "Andale Mono", "Ubuntu Mono", "Courier New", monospace';
+  
+  const customDarkTheme = {
+    ...vscDarkPlus,
+    'code[class*="language-"]': {
+      ...vscDarkPlus['code[class*="language-"]'],
+      fontFamily: customFontFamily,
+    },
+    'pre[class*="language-"]': {
+      ...vscDarkPlus['pre[class*="language-"]'],
+      fontFamily: customFontFamily,
+    },
+  };
+
+  const customLightTheme = {
+    ...vs,
+    'code[class*="language-"]': {
+      ...vs['code[class*="language-"]'],
+      fontFamily: customFontFamily,
+    },
+    'pre[class*="language-"]': {
+      ...vs['pre[class*="language-"]'],
+      fontFamily: customFontFamily,
+    },
+  };
+
+  const codeStyle = isDark ? customDarkTheme : customLightTheme;
 
   // 优先使用 tree 解析的完整文件列表（包含 package.json 等），否则使用 files 属性
   const displayFiles = useMemo(() => {
@@ -200,40 +228,32 @@ export function CodePanel({ files, tree, summary }: CodePanelProps) {
   };
 
   return (
-    <div className="code-panel">
-      <div className="code-panel-header">
-        <div className="header-left">
-          <h3>项目代码</h3>
-          <div className="panel-tabs">
-            <button 
-              className={`tab-btn ${activeTab === 'code' ? 'active' : ''}`}
-              onClick={() => setActiveTab('code')}
-            >
-              代码
-            </button>
-            <button 
-              className={`tab-btn ${activeTab === 'preview' ? 'active' : ''}`}
-              onClick={() => setActiveTab('preview')}
-            >
-              预览
-            </button>
-          </div>
+    <div className="flex flex-col h-full bg-card border-l border-border">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+        <div className="flex items-center gap-4">
+          <h3 className="text-sm font-semibold">项目代码</h3>
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'code' | 'preview')}>
+            <TabsList className="h-8">
+              <TabsTrigger value="code" className="text-xs">代码</TabsTrigger>
+              <TabsTrigger value="preview" className="text-xs">预览</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
-        <div className="header-right">
+        <div className="text-xs text-muted-foreground">
           <span className="file-count">{displayFiles.length} 个文件</span>
         </div>
       </div>
       
       {summary && activeTab === 'code' && (
-        <div className="code-summary">
+        <div className="px-4 py-2 bg-muted/30 border-b border-border text-xs text-muted-foreground">
           <p>{summary}</p>
         </div>
       )}
 
-      <div className="code-panel-body">
+      <div className="flex-1 overflow-hidden">
         {activeTab === 'code' ? (
-          <>
-            <div className="file-tree">
+          <div className="flex h-full">
+            <div className="w-64 border-r border-border overflow-y-auto bg-muted/10">
               {fileTree.children.map(node => (
                 <TreeItem
                   key={node.path}
@@ -250,23 +270,22 @@ export function CodePanel({ files, tree, summary }: CodePanelProps) {
               ))}
             </div>
 
-            <div className="code-preview">
+            <div className={cn("flex-1 flex flex-col h-full min-w-0", isDark ? "bg-[#1e1e1e]" : "bg-white")}>
               {selectedFile ? (
                 <>
-                  <div className="preview-header">
-                    <span className="file-name">{selectedFile.path}</span>
+                  <div className="px-4 py-2 border-b border-border bg-muted/10 flex items-center justify-between">
+                    <span className="text-xs font-mono text-muted-foreground">{selectedFile.path}</span>
                   </div>
-                  <div className="code-content-wrapper">
+                  <div className="flex-1 overflow-auto relative">
                      <SyntaxHighlighter
                         language={getLanguage(selectedFile.path)}
                         style={codeStyle}
                         customStyle={{
                             margin: 0,
                             padding: '16px',
-                            background: 'var(--color-bg-secondary)',
-                            fontSize: '12px',
-                            lineHeight: '1.5',
-                            height: '100%'
+                            background: 'transparent',
+                            fontSize: '14px',
+                            lineHeight: '1.6',
                         }}
                         showLineNumbers={true}
                         wrapLines={true}
@@ -276,30 +295,30 @@ export function CodePanel({ files, tree, summary }: CodePanelProps) {
                   </div>
                 </>
               ) : (
-                <div className="preview-placeholder">
+                <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
                   <p>选择文件查看代码</p>
                 </div>
               )}
             </div>
-          </>
+          </div>
         ) : (
-          <div className="runtime-preview">
-            <div className="preview-container">
+          <div className="flex flex-col h-full">
+            <div className="flex-1 relative bg-white">
               {url ? (
-                <iframe key={refreshKey} src={url} className="preview-iframe" title="Preview" />
+                <iframe key={refreshKey} src={url} className="w-full h-full border-none" title="Preview" />
               ) : (
-                <div className="preview-loading">
-                  <div className="spinner"></div>
-                  <p>{status === 'installing' ? '正在安装依赖...' : 
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted-foreground">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  <p className="text-sm">{status === 'installing' ? '正在安装依赖...' : 
                       status === 'running' ? '正在启动开发服务器...' : 
                       status === 'booting' ? '正在启动容器...' : 
                       status === 'mounting' ? '正在挂载文件...' : '等待预览启动...'}</p>
                 </div>
               )}
             </div>
-            <div className="terminal-container">
-              <div className="terminal-header">终端输出</div>
-              <pre className="terminal-content">{output}</pre>
+            <div className="h-48 border-t border-border bg-card flex flex-col">
+              <div className="px-4 py-2 border-b border-border text-xs font-semibold text-muted-foreground">终端输出</div>
+              <pre className="flex-1 p-4 font-mono text-xs overflow-auto text-muted-foreground whitespace-pre-wrap">{output}</pre>
             </div>
           </div>
         )}
@@ -330,22 +349,26 @@ function TreeItem({ node, depth, expandedDirs, selectedPath, onToggleDir, onSele
   };
 
   return (
-    <div className="tree-item">
+    <div className="tree-item text-sm">
       <div 
-        className={`tree-row ${isSelected ? 'selected' : ''}`}
+        className={cn(
+          "flex items-center gap-1.5 py-1 cursor-pointer hover:bg-accent hover:text-accent-foreground text-muted-foreground transition-colors",
+          isSelected && "bg-accent text-accent-foreground font-medium",
+          !isSelected && "hover:text-foreground"
+        )}
         style={{ paddingLeft: `${depth * 14 + 10}px` }}
         onClick={handleClick}
       >
         {node.isDir ? (
-          <span className={`folder-indicator ${isExpanded ? 'expanded' : ''}`}>›</span>
+          <span className={cn("text-xs transition-transform", isExpanded && "rotate-90")}>›</span>
         ) : (
-          <span className="file-indicator">·</span>
+          <span className="opacity-0">·</span>
         )}
-        <span className="node-name">{node.name}</span>
+        <span className="truncate">{node.name}</span>
       </div>
 
       {node.isDir && isExpanded && (
-        <div className="tree-children">
+        <div>
           {node.children.map(child => (
             <TreeItem
               key={child.path}

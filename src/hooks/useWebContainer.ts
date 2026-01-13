@@ -9,21 +9,25 @@ function stripAnsi(str: string): string {
   // 使用 String.fromCharCode 构建控制字符，避免 ESLint no-control-regex 错误
   const ESC = String.fromCharCode(27); // \x1b
   const BEL = String.fromCharCode(7);  // \x07
-  
+
   // 匹配 ANSI 转义序列:
   // ESC[ 开头，后跟参数和命令字符 (CSI sequences)
   // ESC] 开头的 OSC sequences，以 BEL 结尾
-   
+
   const ansiRegex = new RegExp(`${ESC}\\[[0-9;]*[a-zA-Z]|${ESC}\\][^${BEL}]*${BEL}`, 'g');
-  
+
   // 移除回车符（用于进度条覆盖），保留换行符
   return str
     .replace(ansiRegex, '')
     .replace(/\r(?!\n)/g, '\n'); // 单独的 \r 替换为 \n 以保持可读性
 }
 
+// 全局 WebContainer 单例，避免 HMR 或 Strict Mode 导致重复创建
+let globalWebContainerInstance: WebContainer | null = null;
+let globalBootPromise: Promise<WebContainer> | null = null;
+
 export function useWebContainer() {
-  const webcontainerRef = useRef<WebContainer | null>(null);
+  const webcontainerRef = useRef<WebContainer | null>(globalWebContainerInstance);
   const [url, setUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'booting' | 'mounting' | 'installing' | 'running' | 'ready' | 'error'>('idle');
   const [output, setOutput] = useState<string>('');
@@ -38,23 +42,44 @@ export function useWebContainer() {
   };
 
   const boot = useCallback(async () => {
-    if (webcontainerRef.current) return;
-    try {
-      setStatus('booting');
-      const instance = await WebContainer.boot();
-      webcontainerRef.current = instance;
-      setStatus('idle');
-      console.log('WebContainer booted');
-    } catch (e) {
-      console.error('WebContainer boot failed', e);
-      setStatus('error');
-      appendOutput(`\nBoot error: ${e instanceof Error ? e.message : String(e)}`);
+    // 如果已经有全局实例，直接使用
+    if (globalWebContainerInstance) {
+      webcontainerRef.current = globalWebContainerInstance;
+      return globalWebContainerInstance;
     }
+
+    // 如果正在启动，等待启动完成
+    if (globalBootPromise) {
+      const instance = await globalBootPromise;
+      webcontainerRef.current = instance;
+      return instance;
+    }
+
+    // 创建新的启动 Promise
+    globalBootPromise = (async () => {
+      try {
+        setStatus('booting');
+        const instance = await WebContainer.boot();
+        globalWebContainerInstance = instance;
+        webcontainerRef.current = instance;
+        setStatus('idle');
+        console.log('WebContainer booted');
+        return instance;
+      } catch (e) {
+        console.error('WebContainer boot failed', e);
+        setStatus('error');
+        appendOutput(`\nBoot error: ${e instanceof Error ? e.message : String(e)}`);
+        globalBootPromise = null;
+        throw e;
+      }
+    })();
+
+    return globalBootPromise;
   }, []);
 
   useEffect(() => {
     boot();
-  }, [boot]);
+  }, []);
 
   /**
    * 检测 package.json 依赖是否变化

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
-import './ChatInput.css';
+import { Button } from '@/components/ui/button';
+import { Send, X } from 'lucide-react';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -34,11 +35,11 @@ export function ChatInput({ onSend, isLoading, onCancel }: ChatInputProps) {
   };
 
   return (
-    <div className="chat-input-container">
-      <div className="input-wrapper">
+    <div className="flex flex-col gap-2 p-4 border-t border-border bg-background">
+      <div className="flex items-end gap-2">
         <textarea
           ref={textareaRef}
-          className="chat-textarea"
+          className="flex-1 min-h-[40px] max-h-[150px] px-3 py-2 text-sm bg-background border border-input rounded-md resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-muted-foreground"
           placeholder="输入你的消息..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -47,25 +48,26 @@ export function ChatInput({ onSend, isLoading, onCancel }: ChatInputProps) {
           rows={1}
         />
         {isLoading ? (
-          <button
-            className="input-button cancel"
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onCancel}
             title="取消"
           >
-            <span className="button-icon">×</span>
-          </button>
+            <X className="h-4 w-4" />
+          </Button>
         ) : (
-          <button
-            className="input-button send"
+          <Button
+            size="icon"
             onClick={handleSubmit}
             disabled={!input.trim()}
             title="发送"
           >
-            <span className="button-icon">→</span>
-          </button>
+            <Send className="h-4 w-4" />
+          </Button>
         )}
       </div>
-      <div className="input-hint">
+      <div className="text-xs text-muted-foreground">
         按 Enter 发送，Shift + Enter 换行
       </div>
     </div>

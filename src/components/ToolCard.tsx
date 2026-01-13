@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import './ToolCard.css';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ChevronRight, Clock, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ToolCardProps {
   toolName: string;
@@ -26,55 +29,60 @@ export function ToolCard({ toolName, args, result, success, duration, timestamp 
 
   const isRunning = success === undefined;
   const statusText = isRunning ? '运行中' : (success ? '完成' : '失败');
-  const statusClass = isRunning ? 'running' : (success ? 'success' : 'error');
 
   return (
-    <div className={`tool-card ${statusClass}`}>
-      <div className="tool-header" onClick={() => setIsExpanded(!isExpanded)}>
-        <div className="tool-header-left">
-          <span className={`expand-arrow ${isExpanded ? 'expanded' : ''}`}>›</span>
-          <span className="tool-name">{toolName}</span>
-        </div>
-        <div className="tool-header-right">
-          <span className={`status-badge ${statusClass}`}>
-            <span className="status-dot"></span>
+    <Card className="overflow-hidden">
+      <CardHeader 
+        className="p-3 cursor-pointer hover:bg-accent/50 transition-colors"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ChevronRight className={cn(
+              "h-4 w-4 transition-transform",
+              isExpanded && "rotate-90"
+            )} />
+            <span className="font-medium text-sm">{toolName}</span>
+          </div>
+          <Badge variant={isRunning ? 'secondary' : success ? 'default' : 'destructive'} className="flex items-center gap-1">
+            {isRunning && <Loader2 className="h-3 w-3 animate-spin" />}
+            {!isRunning && success && <CheckCircle2 className="h-3 w-3" />}
+            {!isRunning && !success && <XCircle className="h-3 w-3" />}
             {statusText}
-          </span>
+          </Badge>
         </div>
-      </div>
+        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+          {duration !== undefined && (
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {formatDuration(duration)}
+            </span>
+          )}
+          {timestamp && (
+            <span>{formatTime(timestamp)}</span>
+          )}
+        </div>
+      </CardHeader>
 
-      <div className="tool-meta">
-        {duration !== undefined && (
-          <span className="meta-item">{formatDuration(duration)}</span>
-        )}
-        {timestamp && (
-          <span className="meta-item">{formatTime(timestamp)}</span>
-        )}
-      </div>
-      
       {isExpanded && (
-        <div className="tool-body">
-          <div className="tool-section">
-            <div className="section-header">
-              <span className="section-label">输入</span>
-            </div>
-            <pre className="code-block">
+        <CardContent className="p-3 pt-0 space-y-3">
+          <div>
+            <div className="text-xs font-medium text-muted-foreground mb-1">输入</div>
+            <pre className="text-xs bg-muted p-2 rounded-md overflow-x-auto">
               {JSON.stringify(args, null, 2)}
             </pre>
           </div>
           
           {result && (
-            <div className="tool-section">
-              <div className="section-header">
-                <span className="section-label">输出</span>
-              </div>
-              <div className="result-content">
+            <div>
+              <div className="text-xs font-medium text-muted-foreground mb-1">输出</div>
+              <div className="text-xs bg-muted p-2 rounded-md whitespace-pre-wrap break-words">
                 {result}
               </div>
             </div>
           )}
-        </div>
+        </CardContent>
       )}
-    </div>
+    </Card>
   );
 }

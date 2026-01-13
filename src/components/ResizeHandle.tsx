@@ -1,17 +1,13 @@
-/**
- * ResizeHandle - 拖拽分隔条组件
- * 
- * 用于调整相邻面板的宽度
- */
-
 import { useCallback, useEffect, useRef, useState } from 'react';
-import './ResizeHandle.css';
+import { GripVertical } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ResizeHandleProps {
   onResize: (deltaX: number) => void;
+  className?: string;
 }
 
-export function ResizeHandle({ onResize }: ResizeHandleProps) {
+export function ResizeHandle({ onResize, className }: ResizeHandleProps) {
   const [isDragging, setIsDragging] = useState(false);
   const startXRef = useRef(0);
 
@@ -51,10 +47,17 @@ export function ResizeHandle({ onResize }: ResizeHandleProps) {
 
   return (
     <div 
-      className={`resize-handle ${isDragging ? 'dragging' : ''}`}
+      className={cn(
+        "w-4 flex items-center justify-center cursor-col-resize hover:bg-accent/50 transition-colors group relative z-50 -ml-2 -mr-2",
+        isDragging && "bg-accent",
+        className
+      )}
       onMouseDown={handleMouseDown}
     >
-      <div className="resize-handle-line" />
+      <div className={cn(
+        "h-8 w-1 rounded-full bg-border group-hover:bg-accent-foreground/50 transition-colors",
+        isDragging && "bg-accent-foreground"
+      )} />
     </div>
   );
 }

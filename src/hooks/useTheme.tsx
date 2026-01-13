@@ -28,11 +28,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // 应用主题到 document
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === 'light') {
-      root.setAttribute('data-theme', 'light');
-    } else {
-      root.removeAttribute('data-theme');
-    }
+    // 移除旧的主题类
+    root.classList.remove('light', 'dark');
+    // 添加新主题类
+    root.classList.add(theme);
+    // 持久化到 localStorage
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
 
