@@ -352,9 +352,9 @@ function TreeItem({ node, depth, expandedDirs, selectedPath, onToggleDir, onSele
     <div className="tree-item text-sm">
       <div 
         className={cn(
-          "flex items-center gap-1.5 py-1 cursor-pointer hover:bg-accent hover:text-accent-foreground text-muted-foreground transition-colors",
+          "flex items-center gap-1.5 py-1 cursor-pointer text-muted-foreground transition-colors",
           isSelected && "bg-accent text-accent-foreground font-medium",
-          !isSelected && "hover:text-foreground"
+          !isSelected && "hover:text-secondary-foreground hover:bg-secondary"
         )}
         style={{ paddingLeft: `${depth * 14 + 10}px` }}
         onClick={handleClick}

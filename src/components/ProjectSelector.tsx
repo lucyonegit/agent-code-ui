@@ -130,15 +130,19 @@ export function ProjectSelector({ onSelectProject, currentProjectId }: ProjectSe
                 <div
                   key={project.id}
                   className={cn(
-                    "flex items-center justify-between p-2 rounded-sm text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground group",
-                    project.id === currentProjectId && "bg-accent/50 text-accent-foreground",
+                    "flex items-center justify-between p-2 rounded-sm text-sm cursor-pointer group",
+                    project.id === currentProjectId && "bg-blue-600 text-white",
+                    project.id !== currentProjectId &&"hover:bg-blue-500/10 hover:text-#000",
                     loadingProjectId === project.id && "opacity-70 pointer-events-none"
                   )}
                   onClick={() => handleSelectProject(project)}
                 >
                   <div className="flex flex-col gap-0.5 min-w-0 flex-1">
                     <span className="font-medium truncate">{project.name}</span>
-                    <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <span className={cn(
+                      "text-[10px] text-muted-foreground flex items-center gap-1",
+                      project.id === currentProjectId && "text-white",
+                    )}>
                       <Clock className="h-3 w-3" />
                       {formatDate(project.updatedAt)}
                     </span>
