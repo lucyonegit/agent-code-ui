@@ -122,7 +122,7 @@ function ScenarioItem({ scenario, isExpanded, onToggle }: ScenarioItemProps) {
       {isExpanded && (
         <div className="px-2 pb-2 space-y-2 text-xs">
           <div className="space-y-1">
-            <div className="font-semibold text-green-600 dark:text-green-400">Given</div>
+            <div className="font-semibold" style={{ color: 'hsl(var(--primary))' }}>Given</div>
             <ul className="list-disc list-inside space-y-0.5 text-muted-foreground">
               {scenario.given?.map((item, i) => (
                 <li key={i}>{item}</li>
@@ -131,7 +131,7 @@ function ScenarioItem({ scenario, isExpanded, onToggle }: ScenarioItemProps) {
           </div>
           
           <div className="space-y-1">
-            <div className="font-semibold text-blue-600 dark:text-blue-400">When</div>
+            <div className="font-semibold" style={{ color: 'hsl(var(--accent))' }}>When</div>
             <ul className="list-disc list-inside space-y-0.5 text-muted-foreground">
               {scenario.when?.map((item, i) => (
                 <li key={i}>{item}</li>
@@ -140,7 +140,7 @@ function ScenarioItem({ scenario, isExpanded, onToggle }: ScenarioItemProps) {
           </div>
           
           <div className="space-y-1">
-            <div className="font-semibold text-purple-600 dark:text-purple-400">Then</div>
+            <div className="font-semibold" style={{ color: 'hsl(217 91% 60%)' }}>Then</div>
             <ul className="list-disc list-inside space-y-0.5 text-muted-foreground">
               {scenario.then?.map((item, i) => (
                 <li key={i}>{item}</li>

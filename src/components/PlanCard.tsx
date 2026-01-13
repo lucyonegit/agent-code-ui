@@ -1,8 +1,7 @@
 import type { Plan } from '../types/events';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FileText, CheckCircle, Circle, XCircle, Minus, Wrench } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { FileText, CheckCircle, Circle, XCircle, Minus, Wrench, Loader2 } from 'lucide-react';
 
 interface PlanCardProps {
   plan: Plan;
@@ -11,23 +10,15 @@ interface PlanCardProps {
 export function PlanCard({ plan }: PlanCardProps) {
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'done': return <CheckCircle className="h-4 w-4" />;
-      case 'in_progress': return <Circle className="h-4 w-4" />;
-      case 'failed': return <XCircle className="h-4 w-4" />;
-      case 'skipped': return <Minus className="h-4 w-4" />;
-      default: return <Circle className="h-4 w-4" />;
+      case 'done': return <CheckCircle className="h-4 w-4 text-primary" />;
+      case 'in_progress': return <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />;
+      case 'failed': return <XCircle className="h-4 w-4 text-destructive" />;
+      case 'skipped': return <Minus className="h-4 w-4 text-muted-foreground" />;
+      default: return <Circle className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'done': return 'default';
-      case 'in_progress': return 'secondary';
-      case 'failed': return 'destructive';
-      case 'skipped': return 'outline';
-      default: return 'secondary';
-    }
-  };
+
 
   return (
     <Card className="border-l-4 border-l-primary">
@@ -48,12 +39,7 @@ export function PlanCard({ plan }: PlanCardProps) {
           {plan.steps.map((step, index) => (
             <div 
               key={step.id} 
-              className={cn(
-                "flex gap-2 p-2 rounded-md border",
-                step.status === 'done' && 'bg-accent/50',
-                step.status === 'in_progress' && 'bg-secondary',
-                step.status === 'failed' && 'bg-destructive/10'
-              )}
+              className="flex gap-2 p-2 rounded-md border"
             >
               <div className="flex-shrink-0 w-6 h-6 rounded-full bg-background border flex items-center justify-center text-xs font-medium">
                 {index + 1}
@@ -77,9 +63,9 @@ export function PlanCard({ plan }: PlanCardProps) {
                   </div>
                 )}
               </div>
-              <Badge variant={getStatusVariant(step.status) as any} className="flex-shrink-0 h-fit">
+              <div className="flex-shrink-0 h-fit flex items-center justify-center">
                 {getStatusIcon(step.status)}
-              </Badge>
+              </div>
             </div>
           ))}
         </div>

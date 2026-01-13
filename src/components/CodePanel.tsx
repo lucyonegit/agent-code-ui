@@ -270,7 +270,7 @@ export function CodePanel({ files, tree, summary }: CodePanelProps) {
               ))}
             </div>
 
-            <div className={cn("flex-1 flex flex-col h-full min-w-0", isDark ? "bg-[#1e1e1e]" : "bg-white")}>
+            <div className={cn("flex-1 flex flex-col h-full min-w-0", isDark ? "bg-[#1e1e1e]" : "bg-background")}>
               {selectedFile ? (
                 <>
                   <div className="px-4 py-2 border-b border-border bg-muted/10 flex items-center justify-between">
@@ -303,7 +303,7 @@ export function CodePanel({ files, tree, summary }: CodePanelProps) {
           </div>
         ) : (
           <div className="flex flex-col h-full">
-            <div className="flex-1 relative bg-white">
+            <div className="flex-1 relative bg-background">
               {url ? (
                 <iframe key={refreshKey} src={url} className="w-full h-full border-none" title="Preview" />
               ) : (
@@ -353,8 +353,8 @@ function TreeItem({ node, depth, expandedDirs, selectedPath, onToggleDir, onSele
       <div 
         className={cn(
           "flex items-center gap-1.5 py-1 cursor-pointer text-muted-foreground transition-colors",
-          isSelected && "bg-accent text-accent-foreground font-medium",
-          !isSelected && "hover:text-secondary-foreground hover:bg-secondary"
+          isSelected && "bg-primary text-primary-foreground font-medium",
+          !isSelected && "hover:bg-secondary hover:text-secondary-foreground"
         )}
         style={{ paddingLeft: `${depth * 14 + 10}px` }}
         onClick={handleClick}

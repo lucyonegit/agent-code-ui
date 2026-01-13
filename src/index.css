@@ -32,6 +32,33 @@
     --ring: 239 84% 67%;
 
     --radius: 0.5rem;
+
+    /* === Legacy CSS Variable Mappings === */
+    /* Map old custom CSS variables to shadcn theme */
+    --color-bg-primary: var(--background);
+    --color-bg-secondary: var(--card);
+    --color-bg-tertiary: var(--muted);
+    --color-bg-elevated: var(--popover);
+
+    --color-text-primary: var(--foreground);
+    --color-text-secondary: var(--muted-foreground);
+    --color-text-muted: var(--muted-foreground);
+
+    --color-border: var(--border);
+    --color-border-hover: var(--accent);
+
+    --color-accent-primary: var(--accent);
+
+    --color-info: 217 91% 60%; /* Blue - for BDD 'When' */
+    --color-warning: 45 93% 47%; /* Amber - for BDD 'Given' */
+    --color-success: 142 76% 36%; /* Green - for BDD 'Then' */
+
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: var(--radius);
+    --radius-full: 9999px;
+
+    --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo,
+      monospace;
   }
 
   .dark {
@@ -61,6 +88,32 @@
     --border: 215 16% 32%; /* #3f4b5a */
     --input: 215 16% 32%;
     --ring: 239 84% 67%;
+
+    /* === Legacy CSS Variable Mappings (Dark) === */
+    --color-bg-primary: var(--background);
+    --color-bg-secondary: var(--card);
+    --color-bg-tertiary: var(--muted);
+    --color-bg-elevated: var(--popover);
+
+    --color-text-primary: var(--foreground);
+    --color-text-secondary: var(--muted-foreground);
+    --color-text-muted: var(--muted-foreground);
+
+    --color-border: var(--border);
+    --color-border-hover: var(--accent);
+
+    --color-accent-primary: var(--accent);
+
+    --color-info: 217 91% 60%; /* Blue */
+    --color-warning: 45 93% 47%; /* Amber */
+    --color-success: 142 71% 45%; /* Green (slightly lighter for dark mode) */
+
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: var(--radius);
+    --radius-full: 9999px;
+
+    --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo,
+      monospace;
   }
 }
 

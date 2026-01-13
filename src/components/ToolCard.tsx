@@ -33,7 +33,7 @@ export function ToolCard({ toolName, args, result, success, duration, timestamp 
   return (
     <Card className="overflow-hidden">
       <CardHeader 
-        className="p-3 cursor-pointer hover:bg-accent/50 transition-colors"
+        className="p-3 cursor-pointer hover:bg-secondary transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center justify-between">
