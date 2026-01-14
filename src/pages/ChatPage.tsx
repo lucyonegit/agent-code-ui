@@ -30,6 +30,7 @@ export function ChatPage() {
   } = useChat();
 
   const [mode, setMode] = useState<ChatMode>('react');
+  const [inputValue, setInputValue] = useState('');
 
   const currentConversationId = mode === 'react' ? conversationId : plannerConversationId;
 
@@ -90,7 +91,11 @@ export function ChatPage() {
 
         {/* 聊天区域 */}
         <div className="flex-1 overflow-hidden">
-          <ChatContainer messages={messages} isLoading={isLoading} />
+          <ChatContainer 
+            messages={messages} 
+            isLoading={isLoading} 
+            onSelectPrompt={setInputValue}
+          />
         </div>
 
         {/* 输入区域 */}
@@ -101,6 +106,8 @@ export function ChatPage() {
               isLoading={isLoading}
               onCancel={cancel}
               placeholder={mode === 'planner' ? '输入你的目标...' : '输入你的问题...'}
+              value={inputValue}
+              onValueChange={setInputValue}
             />
           </div>
         </div>
