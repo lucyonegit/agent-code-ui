@@ -183,14 +183,7 @@ export interface UnifiedMessage {
   success?: boolean;
 }
 
-/**
- * 消息同步事件 - 用于前后端历史同步
- */
-export interface MessageSyncEvent {
-  type: 'message_sync';
-  message: UnifiedMessage;
-  timestamp: number;
-}
+
 
 // ============================================================================
 // Agent 事件联合类型
@@ -206,7 +199,6 @@ export type AgentEvent =
   | NormalMessageEvent
   | StepStartEvent
   | StepCompleteEvent
-  | MessageSyncEvent
   // 向后兼容
   | StreamEvent
   | ActionEvent

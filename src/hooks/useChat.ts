@@ -13,17 +13,25 @@ import type {
   BDDFeature,
   GeneratedFile,
   ArchitectureFile,
-  UnifiedMessage,
 } from '../types/events';
-import { sendMessage, sendPlannerMessage, sendCodingMessage, getTools, type StoredMessage } from '../services/sseClient';
+import {
+  sendMessage,
+  sendPlannerMessage,
+  sendCodingMessage,
+  getTools,
+  getReactConversation,
+  getPlannerConversation,
+  type StoredMessage,
+} from '../services/sseClient';
 
 export function useChat() {
   const [messages, setMessages] = useState<ChatItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [tools, setTools] = useState<ToolInfo[]>([]);
 
-  // 统一消息历史（用于多轮对话同步）
-  const [messageHistory, setMessageHistory] = useState<UnifiedMessage[]>([]);
+  // 会话 ID（用于多轮对话）
+  const [conversationId, setConversationId] = useState<string | undefined>(undefined);
+  const [plannerConversationId, setPlannerConversationId] = useState<string | undefined>(undefined);
 
   // Coding-specific state (for three-panel layout)
   const [bddFeatures, setBddFeatures] = useState<BDDFeature[]>([]);
@@ -232,12 +240,6 @@ export function useChat() {
         setMessages(prev => [...prev, item]);
         break;
       }
-
-      // === 消息同步事件（用于多轮对话历史累积） ===
-      case 'message_sync': {
-        setMessageHistory(prev => [...prev, event.message]);
-        break;
-      }
     }
   }, []);
 
@@ -304,15 +306,6 @@ export function useChat() {
   const send = useCallback((input: string) => {
     if (!input.trim() || isLoading) return;
 
-    // 添加用户消息到历史
-    const userUnifiedMsg: UnifiedMessage = {
-      id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
-      role: 'user',
-      content: input,
-      timestamp: Date.now(),
-    };
-    setMessageHistory(prev => [...prev, userUnifiedMsg]);
-
     const userMessage: ChatItem = {
       id: `user_${Date.now()}`,
       type: 'user',
@@ -325,10 +318,11 @@ export function useChat() {
     toolCallMapRef.current.clear();
 
     const toolNames = tools.map(t => t.name);
-    // 传递历史消息用于多轮对话
-    const historyToSend = [...messageHistory, userUnifiedMsg];
-    abortRef.current = sendMessage(input, toolNames, historyToSend, {
+    abortRef.current = sendMessage(input, toolNames, conversationId, {
       onEvent: handleEvent,
+      onConversationId: (id) => {
+        setConversationId(id);
+      },
       onDone: () => {
         setIsLoading(false);
         streamingThoughtRef.current.clear();
@@ -344,7 +338,7 @@ export function useChat() {
         setMessages(prev => [...prev, errorItem]);
       },
     });
-  }, [isLoading, tools, handleEvent, messageHistory]);
+  }, [isLoading, tools, handleEvent, conversationId]);
 
   const cancel = useCallback(() => {
     if (abortRef.current) {
@@ -356,7 +350,8 @@ export function useChat() {
 
   const clear = useCallback(() => {
     setMessages([]);
-    setMessageHistory([]);
+    setConversationId(undefined);
+    setPlannerConversationId(undefined);
     setBddFeatures([]);
     setArchitectureFiles([]);
     setGeneratedFiles([]);
@@ -364,10 +359,6 @@ export function useChat() {
     setCodeSummary('');
     streamingThoughtRef.current.clear();
     toolCallMapRef.current.clear();
-  }, []);
-
-  const clearHistory = useCallback(() => {
-    setMessageHistory([]);
   }, []);
 
   // 加载已保存的项目
@@ -403,6 +394,81 @@ export function useChat() {
     }
   }, []);
 
+  // 将存储的消息转换为 ChatItem，合并 tool_result 到 tool_call
+  const convertStoredMessagesToChatItems = (messages: StoredMessage[]): ChatItem[] => {
+    const chatItems: ChatItem[] = [];
+    const toolResultMap = new Map<string, StoredMessage>();
+
+    // 先收集所有 tool_result
+    for (const msg of messages) {
+      if (msg.type === 'tool_result' && msg.toolCallId) {
+        toolResultMap.set(msg.toolCallId, msg);
+      }
+    }
+
+    // 转换消息，合并 tool_result 到 tool_call
+    for (const msg of messages) {
+      // 跳过 tool_result，因为会合并到 tool_call
+      if (msg.type === 'tool_result') continue;
+
+      if (msg.type === 'tool_call' && msg.toolCallId) {
+        const toolResult = toolResultMap.get(msg.toolCallId);
+        chatItems.push({
+          id: msg.id,
+          type: 'tool_call',
+          content: msg.content,
+          timestamp: msg.timestamp,
+          toolCallId: msg.toolCallId,
+          toolName: msg.toolName,
+          args: msg.args,
+          // 合并 tool_result 的字段
+          result: toolResult?.result,
+          success: toolResult?.success,
+          duration: toolResult?.duration,
+          isStreaming: false,
+          isComplete: true,
+        });
+      } else {
+        chatItems.push({
+          id: msg.id,
+          type: msg.type as ChatItem['type'],
+          content: msg.content,
+          timestamp: msg.timestamp,
+          toolCallId: msg.toolCallId,
+          toolName: msg.toolName,
+          args: msg.args,
+          result: msg.result,
+          success: msg.success,
+          duration: msg.duration,
+          isStreaming: msg.isStreaming,
+          isComplete: msg.isComplete,
+        });
+      }
+    }
+
+    return chatItems;
+  };
+
+  // 加载推理模式会话
+  const loadReactConversation = useCallback(async (id: string) => {
+    const conversation = await getReactConversation(id);
+    if (conversation) {
+      setConversationId(id);
+      const chatItems = convertStoredMessagesToChatItems(conversation.messages);
+      setMessages(chatItems);
+    }
+  }, []);
+
+  // 加载规划模式会话
+  const loadPlannerConversation = useCallback(async (id: string) => {
+    const data = await getPlannerConversation(id);
+    if (data.conversation) {
+      setPlannerConversationId(id);
+      const chatItems = convertStoredMessagesToChatItems(data.conversation.messages);
+      setMessages(chatItems);
+    }
+  }, []);
+
   const sendPlanner = useCallback((goal: string) => {
     if (!goal.trim() || isLoading) return;
 
@@ -417,8 +483,11 @@ export function useChat() {
     streamingThoughtRef.current.clear();
 
     const toolNames = tools.map(t => t.name);
-    abortRef.current = sendPlannerMessage(goal, toolNames, {
+    abortRef.current = sendPlannerMessage(goal, toolNames, plannerConversationId, {
       onEvent: handleEvent,
+      onConversationId: (id) => {
+        setPlannerConversationId(id);
+      },
       onDone: () => {
         setIsLoading(false);
         streamingThoughtRef.current.clear();
@@ -434,7 +503,7 @@ export function useChat() {
         setMessages(prev => [...prev, errorItem]);
       },
     });
-  }, [isLoading, tools, handleEvent]);
+  }, [isLoading, tools, handleEvent, plannerConversationId]);
 
   const sendCoding = useCallback((requirement: string) => {
     if (!requirement.trim() || isLoading) return;
@@ -478,7 +547,8 @@ export function useChat() {
 
   return {
     messages,
-    messageHistory,
+    conversationId,
+    plannerConversationId,
     isLoading,
     tools,
     // Coding-specific state
@@ -494,7 +564,8 @@ export function useChat() {
     sendCoding,
     cancel,
     clear,
-    clearHistory,
     loadProject,
+    loadReactConversation,
+    loadPlannerConversation,
   };
 }

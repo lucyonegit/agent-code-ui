@@ -2,7 +2,7 @@
  * SSE Client for connecting to base-agent server
  */
 
-import type { AgentEvent, UnifiedMessage } from '../types/events';
+import type { AgentEvent } from '../types/events';
 
 const API_BASE = 'http://localhost:3002';
 
@@ -18,8 +18,8 @@ export interface SSEClientOptions {
 export function sendMessage(
   input: string,
   tools: string[],
-  history: UnifiedMessage[],
-  options: SSEClientOptions
+  conversationId: string | undefined,
+  options: SSEClientOptions & { onConversationId?: (id: string) => void }
 ): () => void {
   const abortController = new AbortController();
 
@@ -30,7 +30,7 @@ export function sendMessage(
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ input, tools, history }),
+        body: JSON.stringify({ input, tools, conversationId }),
         signal: abortController.signal,
       });
 
@@ -68,6 +68,9 @@ export function sendMessage(
 
                 if (currentEvent === 'done') {
                   options.onDone?.(parsed.type === 'done' ? parsed.result : '');
+                } else if (currentEvent === 'conversation_id') {
+                  // 接收后端返回的 conversationId
+                  options.onConversationId?.((parsed as any).conversationId);
                 } else {
                   options.onEvent(parsed);
                 }
@@ -117,7 +120,8 @@ export async function getTools(): Promise<{ name: string; description: string }[
 export function sendPlannerMessage(
   goal: string,
   tools: string[],
-  options: SSEClientOptions
+  conversationId: string | undefined,
+  options: SSEClientOptions & { onConversationId?: (id: string) => void }
 ): () => void {
   const abortController = new AbortController();
 
@@ -128,7 +132,7 @@ export function sendPlannerMessage(
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ goal, tools }),
+        body: JSON.stringify({ goal, tools, conversationId }),
         signal: abortController.signal,
       });
 
@@ -166,6 +170,8 @@ export function sendPlannerMessage(
 
                 if (currentEvent === 'planner_done') {
                   options.onDone?.(parsed.type === 'planner_done' ? parsed.response : '');
+                } else if (currentEvent === 'conversation_id') {
+                  options.onConversationId?.((parsed as any).conversationId);
                 } else {
                   options.onEvent(parsed);
                 }
@@ -303,7 +309,7 @@ export interface ProjectDetail extends ProjectInfo {
  */
 export interface StoredMessage {
   id: string;
-  type: 'user' | 'thought' | 'normal_message' | 'tool_call' | 'final_result' | 'error';
+  type: 'user' | 'thought' | 'normal_message' | 'tool_call' | 'tool_result' | 'final_result' | 'error';
   content: string;
   timestamp: number;
   // 工具调用相关 (type === 'tool_call' 时使用)
@@ -395,5 +401,132 @@ export async function deleteProject(
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     return { success: false, error: message };
+  }
+}
+
+// ============================================================================
+// 会话管理 API
+// ============================================================================
+
+export interface ConversationListItem {
+  conversationId: string;
+  lastUserInput: string;
+  updatedAt: string;
+  createdAt: string;
+  totalTurns: number;
+}
+
+export interface ConversationDetail {
+  conversationId: string;
+  messages: StoredMessage[];
+  metadata: {
+    createdAt: string;
+    updatedAt: string;
+    totalTurns: number;
+    lastUserInput: string;
+  };
+}
+
+/**
+ * 获取推理模式会话列表
+ */
+export async function getReactConversations(): Promise<ConversationListItem[]> {
+  try {
+    const response = await fetch(`${API_BASE}/api/react/conversations`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to fetch react conversations:', error);
+    return [];
+  }
+}
+
+/**
+ * 获取推理模式会话详情
+ */
+export async function getReactConversation(conversationId: string): Promise<ConversationDetail | null> {
+  try {
+    const response = await fetch(`${API_BASE}/api/react/conversation/${conversationId}`);
+    if (!response.ok) {
+      if (response.status === 404) return null;
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to fetch react conversation:', error);
+    return null;
+  }
+}
+
+/**
+ * 删除推理模式会话
+ */
+export async function deleteReactConversation(conversationId: string): Promise<{ success: boolean }> {
+  try {
+    const response = await fetch(`${API_BASE}/api/react/conversation/${conversationId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      return { success: false };
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to delete react conversation:', error);
+    return { success: false };
+  }
+}
+
+/**
+ * 获取规划模式会话列表
+ */
+export async function getPlannerConversations(): Promise<ConversationListItem[]> {
+  try {
+    const response = await fetch(`${API_BASE}/api/planner/conversations`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to fetch planner conversations:', error);
+    return [];
+  }
+}
+
+/**
+ * 获取规划模式会话详情
+ */
+export async function getPlannerConversation(conversationId: string): Promise<{
+  conversation: ConversationDetail | null;
+  plan: unknown;
+}> {
+  try {
+    const response = await fetch(`${API_BASE}/api/planner/conversation/${conversationId}`);
+    if (!response.ok) {
+      return { conversation: null, plan: null };
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to fetch planner conversation:', error);
+    return { conversation: null, plan: null };
+  }
+}
+
+/**
+ * 删除规划模式会话
+ */
+export async function deletePlannerConversation(conversationId: string): Promise<{ success: boolean }> {
+  try {
+    const response = await fetch(`${API_BASE}/api/planner/conversation/${conversationId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      return { success: false };
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to delete planner conversation:', error);
+    return { success: false };
   }
 }
