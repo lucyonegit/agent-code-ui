@@ -44,6 +44,7 @@ export function useChat() {
   const abortRef = useRef<(() => void) | null>(null);
   const streamingThoughtRef = useRef<Map<string, ChatItem>>(new Map());
   const toolCallMapRef = useRef<Map<string, ChatItem>>(new Map());
+  const streamingFinalAnswerRef = useRef<Map<string, ChatItem>>(new Map());
 
   // Fetch available tools on mount
   useEffect(() => {
@@ -136,13 +137,59 @@ export function useChat() {
         streamingThoughtRef.current.clear();
         toolCallMapRef.current.clear();
 
-        const item: ChatItem = {
-          id: `final_${Date.now()}`,
-          type: 'final_result',
-          content: event.content,
-          timestamp: event.timestamp,
-        };
-        setMessages(prev => [...prev, item]);
+        // 如果已经有流式最终答案，只需标记完成并清理 ref，不再添加新消息
+        if (streamingFinalAnswerRef.current.size > 0) {
+          streamingFinalAnswerRef.current.forEach(answer => {
+            answer.isStreaming = false;
+            answer.isComplete = true;
+          });
+          setMessages(prev =>
+            prev.map(m => {
+              const streamingAnswer = streamingFinalAnswerRef.current.get(m.id);
+              if (streamingAnswer) {
+                return { ...streamingAnswer };
+              }
+              return m;
+            })
+          );
+          streamingFinalAnswerRef.current.clear();
+        } else {
+          // 没有流式答案（直接给出的最终答案），创建新消息
+          const item: ChatItem = {
+            id: `final_${Date.now()}`,
+            type: 'final_result',
+            content: event.content,
+            timestamp: event.timestamp,
+          };
+          setMessages(prev => [...prev, item]);
+        }
+        break;
+      }
+
+      // === 新版 final_answer_stream 事件（流式最终答案） ===
+      case 'final_answer_stream': {
+        const existing = streamingFinalAnswerRef.current.get(event.answerId);
+        if (existing) {
+          // 累积内容
+          existing.content += event.chunk;
+          existing.isComplete = event.isComplete;
+          existing.isStreaming = !event.isComplete;
+          setMessages(prev =>
+            prev.map(m => m.id === existing.id ? { ...existing } : m)
+          );
+        } else if (event.chunk) {
+          // 新的 final_answer 流
+          const newFinalAnswer: ChatItem = {
+            id: event.answerId,
+            type: 'final_result',
+            content: event.chunk,
+            isStreaming: !event.isComplete,
+            isComplete: event.isComplete,
+            timestamp: event.timestamp,
+          };
+          streamingFinalAnswerRef.current.set(event.answerId, newFinalAnswer);
+          setMessages(prev => [...prev, newFinalAnswer]);
+        }
         break;
       }
 
@@ -359,6 +406,7 @@ export function useChat() {
     setCodeSummary('');
     streamingThoughtRef.current.clear();
     toolCallMapRef.current.clear();
+    streamingFinalAnswerRef.current.clear();
   }, []);
 
   // 加载已保存的项目

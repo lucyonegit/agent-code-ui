@@ -72,6 +72,17 @@ export interface NormalMessageEvent {
   timestamp: number;
 }
 
+/**
+ * 最终答案流式输出事件
+ */
+export interface FinalAnswerStreamEvent {
+  type: 'final_answer_stream';
+  answerId: string;  // 唯一标识符，用于前端合并同一次调用的 chunks
+  chunk: string;
+  isComplete: boolean;
+  timestamp: number;
+}
+
 // ============================================================================
 // 向后兼容事件（旧版，逐步废弃）
 // ============================================================================
@@ -195,6 +206,7 @@ export type AgentEvent =
   | ToolCallEvent
   | ToolCallResultEvent
   | FinalResultEvent
+  | FinalAnswerStreamEvent
   | ErrorEvent
   | NormalMessageEvent
   | StepStartEvent
