@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
+import { useRef, useEffect, type KeyboardEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Send, X } from 'lucide-react';
 
@@ -7,10 +7,18 @@ interface ChatInputProps {
   isLoading: boolean;
   onCancel?: () => void;
   placeholder?: string;
+  value: string;
+  onValueChange: (value: string) => void;
 }
 
-export function ChatInput({ onSend, isLoading, onCancel, placeholder = '输入你的消息...' }: ChatInputProps) {
-  const [input, setInput] = useState('');
+export function ChatInput({ 
+  onSend, 
+  isLoading, 
+  onCancel, 
+  placeholder = '输入你的消息...',
+  value,
+  onValueChange
+}: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-resize textarea
@@ -19,12 +27,12 @@ export function ChatInput({ onSend, isLoading, onCancel, placeholder = '输入�
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 150)}px`;
     }
-  }, [input]);
+  }, [value]);
 
   const handleSubmit = () => {
-    if (input.trim() && !isLoading) {
-      onSend(input.trim());
-      setInput('');
+    if (value.trim() && !isLoading) {
+      onSend(value.trim());
+      onValueChange('');
     }
   };
 
@@ -42,8 +50,8 @@ export function ChatInput({ onSend, isLoading, onCancel, placeholder = '输入�
           ref={textareaRef}
           className="flex-1 min-h-[40px] max-h-[150px] px-3 py-2 text-sm bg-background border border-input rounded-md resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-muted-foreground"
           placeholder={placeholder}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
+          value={value}
+          onChange={(e) => onValueChange(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={isLoading}
           rows={1}
@@ -61,7 +69,7 @@ export function ChatInput({ onSend, isLoading, onCancel, placeholder = '输入�
           <Button
             size="icon"
             onClick={handleSubmit}
-            disabled={!input.trim()}
+            disabled={!value.trim()}
             title="发送"
           >
             <Send className="h-4 w-4" />

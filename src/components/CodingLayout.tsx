@@ -38,6 +38,9 @@ export function CodingLayout({
 }: CodingLayoutProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   
+  // Lifted state for chat input
+  const [inputValue, setInputValue] = useState('');
+
   // 面板宽度百分比（两栏布局）
   const [panelWidths, setPanelWidths] = useState({
     chat: 35,    // 左侧对话面板
@@ -74,8 +77,18 @@ export function CodingLayout({
         className="coding-panel chat-panel"
         style={{ width: `${panelWidths.chat}%` }}
       >
-        <ChatContainer messages={messages} isLoading={isLoading} />
-        <ChatInput onSend={onSend} isLoading={isLoading} onCancel={onCancel} />
+        <ChatContainer 
+          messages={messages} 
+          isLoading={isLoading} 
+          onSelectPrompt={setInputValue}
+        />
+        <ChatInput 
+          onSend={onSend} 
+          isLoading={isLoading} 
+          onCancel={onCancel}
+          value={inputValue}
+          onValueChange={setInputValue}
+        />
       </div>
       
       <ResizeHandle onResize={handleResize} />

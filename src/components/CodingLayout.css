@@ -6,15 +6,36 @@
   display: flex;
   height: 100%;
   background: var(--color-bg-primary);
+  /* Modern mesh-like background gradient */
+  background: radial-gradient(
+      at 0% 0%,
+      hsla(239, 84%, 67%, 0.05) 0px,
+      transparent 50%
+    ),
+    radial-gradient(at 100% 0%, hsla(217, 91%, 60%, 0.05) 0px, transparent 50%),
+    radial-gradient(
+      at 100% 100%,
+      hsla(239, 84%, 67%, 0.05) 0px,
+      transparent 50%
+    ),
+    radial-gradient(at 0% 100%, hsla(217, 91%, 60%, 0.05) 0px, transparent 50%),
+    var(--color-bg-primary);
 }
 
 .coding-panel {
-  background: var(--color-bg-primary);
   display: flex;
   flex-direction: column;
   min-height: 0;
   flex-shrink: 0;
   overflow: hidden;
+  /* Glassmorphism effect */
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.dark .coding-panel {
+  background: rgba(15, 20, 25, 0.4);
 }
 
 /* Left chat panel */
@@ -70,4 +91,3 @@
     display: none;
   }
 }
-

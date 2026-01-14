@@ -47,16 +47,19 @@ export function ResizeHandle({ onResize, className }: ResizeHandleProps) {
   return (
     <div 
       className={cn(
-        "w-4 flex items-center justify-center cursor-col-resize hover:bg-accent/50 transition-colors group relative z-50 -ml-2 -mr-2",
-        isDragging && "bg-accent",
+        "w-2 flex items-center justify-center cursor-col-resize hover:bg-primary/20 transition-all group relative z-50",
+        isDragging && "bg-primary/30",
         className
       )}
       onMouseDown={handleMouseDown}
     >
       <div className={cn(
-        "h-8 w-1 rounded-full bg-border group-hover:bg-accent-foreground/50 transition-colors",
-        isDragging && "bg-accent-foreground"
+        "h-12 w-1 rounded-full bg-border group-hover:bg-primary transition-all duration-300",
+        isDragging && "bg-primary scale-x-125"
       )} />
+      
+      {/* Glow effect on hover */}
+      <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 blur-md -z-10 transition-all" />
     </div>
   );
 }
