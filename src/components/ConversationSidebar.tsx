@@ -85,7 +85,7 @@ export function ConversationSidebar({
   };
 
   return (
-    <div className="w-64 h-full flex flex-col bg-muted/30 border-r border-border">
+    <div className="w-64 h-full flex flex-col bg-muted/30 border-r border-border overflow-hidden">
       {/* 新建会话按钮 */}
       <div className="p-3 border-b border-border">
         <Button 
@@ -99,7 +99,7 @@ export function ConversationSidebar({
       </div>
 
       {/* 会话列表 */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="p-2 space-y-1">
           {isLoading ? (
             <div className="text-center text-muted-foreground py-4 text-sm">
