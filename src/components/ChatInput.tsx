@@ -36,7 +36,7 @@ export function ChatInput({ onSend, isLoading, onCancel, placeholder = '输入�
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 p-[20px]">
       <div className="flex items-end gap-2">
         <textarea
           ref={textareaRef}
