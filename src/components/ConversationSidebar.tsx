@@ -85,7 +85,7 @@ export function ConversationSidebar({
   };
 
   return (
-    <div className="w-64 h-full flex flex-col bg-muted/30 border-r border-border overflow-hidden">
+    <div className="w-64 h-full flex flex-col bg-muted/30 border-r border-border overflow-hidden shrink-0">
       {/* 新建会话按钮 */}
       <div className="p-3 border-b border-border">
         <Button 
@@ -100,7 +100,7 @@ export function ConversationSidebar({
 
       {/* 会话列表 */}
       <ScrollArea className="flex-1 min-h-0">
-        <div className="p-2 space-y-1">
+        <div className="p-2 space-y-1 overflow-hidden">
           {isLoading ? (
             <div className="text-center text-muted-foreground py-4 text-sm">
               加载中...
@@ -115,29 +115,29 @@ export function ConversationSidebar({
               <div
                 key={conv.conversationId}
                 className={cn(
-                  "group relative p-3 rounded-lg cursor-pointer transition-all",
+                  "group flex items-center gap-2 p-3 rounded-lg cursor-pointer transition-all overflow-hidden",
                   "hover:bg-muted",
                   currentConversationId === conv.conversationId 
                     ? "bg-primary/10 border-l-2 border-primary" 
-                    : "border-l-2 border-transparent"
+                    : "border-l-2 border-transparent pl-[calc(0.75rem+2px)]"
                 )}
                 onClick={() => onSelectConversation(conv.conversationId)}
               >
-                <div className="pr-6">
+                <div className="flex-1 min-w-0">
                   <div className={cn(
                     "text-sm font-medium truncate",
                     currentConversationId === conv.conversationId && "text-primary"
                   )}>
                     {conv.lastUserInput || '新会话'}
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">
+                  <div className="text-xs text-muted-foreground mt-1 truncate">
                     {formatTime(conv.updatedAt)} · {conv.totalTurns}轮对话
                   </div>
                 </div>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                   onClick={(e) => handleDelete(e, conv.conversationId)}
                 >
                   <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
