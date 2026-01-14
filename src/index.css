@@ -62,32 +62,32 @@
   }
 
   .dark {
-    /* === Deep Blue Tech Theme (Dark Mode) === */
-    --background: 222 47% 11%; /* #0f1419 深邃蓝黑 */
-    --foreground: 213 31% 91%; /* #dee4ed 柔和白 */
-    --card: 217 33% 17%; /* #1c2333 卡片背景 */
-    --card-foreground: 213 31% 91%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 213 31% 91%;
+    /* === Midnight Black Theme (Dark Mode) === */
+    --background: 240 10% 3.9%; /* Zinc 950 - #09090b */
+    --foreground: 0 0% 98%; /* Zinc 50 - #fafafa */
+    --card: 240 10% 5.9%; /* Slightly lighter than bg */
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 4.9%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 239 84% 67%; /* #6366f1 Indigo */
+    --primary: 263.4 70% 50.4%; /* Violet 600 - #7c3aed */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 25% 27%; /* #354151 */
-    --secondary-foreground: 213 31% 91%;
+    --secondary: 240 3.7% 15.9%; /* Zinc 800 - #27272a */
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 215 25% 27%;
-    --muted-foreground: 217 10% 65%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%; /* Zinc 400 */
 
-    --accent: 217 91% 60%; /* #3b82f6 电光蓝 */
-    --accent-foreground: 0 0% 100%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 215 16% 32%; /* #3f4b5a */
-    --input: 215 16% 32%;
-    --ring: 239 84% 67%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%; /* Zinc 300 */
 
     /* === Legacy CSS Variable Mappings (Dark) === */
     --color-bg-primary: var(--background);
@@ -102,11 +102,11 @@
     --color-border: var(--border);
     --color-border-hover: var(--accent);
 
-    --color-accent-primary: var(--accent);
+    --color-accent-primary: var(--primary);
 
-    --color-info: 217 91% 60%; /* Blue */
-    --color-warning: 45 93% 47%; /* Amber */
-    --color-success: 142 71% 45%; /* Green (slightly lighter for dark mode) */
+    --color-info: 217 91% 60%; /* Keep info/warning/success stable */
+    --color-warning: 45 93% 47%;
+    --color-success: 142 71% 45%;
 
     --radius-sm: calc(var(--radius) - 4px);
     --radius-md: var(--radius);
