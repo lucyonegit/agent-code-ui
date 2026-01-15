@@ -461,8 +461,26 @@ export class WebContainerManager {
         const restored = await this.restoreSnapshotFromOPFS(projectId, expectedHash);
 
         if (restored) {
-          // 快照恢复成功，直接启动服务器
-          // 二进制快照会自动保留文件执行权限
+          // 快照恢复成功
+          // 注意：OPFS 恢复后 bin 文件可能丢失执行权限
+          // 先删除 .bin 目录，再用 npm install 重建
+          try {
+            this.appendOutput('Fixing bin links...\n');
+            // 删除 .bin 目录强制 npm 重建
+            const rmProcess = await this.container!.spawn('rm', ['-rf', 'node_modules/.bin']);
+            await rmProcess.exit;
+            const fixProcess = await this.container!.spawn('npm', ['install', '--prefer-offline']);
+            fixProcess.output.pipeTo(new WritableStream({
+              write: (data) => {
+                this.appendOutput(data);
+              }
+            }));
+            await fixProcess.exit;
+            this.appendOutput('Bin links fixed.\n');
+          } catch (fixError) {
+            console.warn('[WebContainerManager] Fix bin links failed:', fixError);
+          }
+
           const url = await this.startDevServer();
           const metrics = this.monitor.finishMetrics();
           this.emit('metrics', metrics);
@@ -488,6 +506,7 @@ export class WebContainerManager {
 
     return url;
   }
+
 
 
   /**
