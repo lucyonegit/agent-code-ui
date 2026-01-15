@@ -84,6 +84,43 @@ export interface FinalAnswerStreamEvent {
 }
 
 // ============================================================================
+// Artifact 事件类型
+// ============================================================================
+
+/**
+ * Artifact 文件类型
+ */
+export type ArtifactFileType = 'md' | 'html' | 'txt' | 'json' | 'other';
+
+/**
+ * Artifact 文件信息
+ */
+export interface ArtifactInfo {
+  /** 文件名 */
+  name: string;
+  /** 相对于 artifacts 目录的路径 */
+  path: string;
+  /** 文件类型 */
+  type: ArtifactFileType;
+  /** 文件大小（字节） */
+  size: number;
+}
+
+/**
+ * Artifact 事件（SSE 推送会话产生的文件资源）
+ */
+export interface ArtifactEvent {
+  type: 'artifact_event';
+  /** 会话 ID */
+  conversationId: string;
+  /** 会话模式 */
+  mode: 'react' | 'plan';
+  /** 文件列表 */
+  artifacts: ArtifactInfo[];
+  timestamp: number;
+}
+
+// ============================================================================
 // 向后兼容事件（旧版，逐步废弃）
 // ============================================================================
 
@@ -211,6 +248,7 @@ export type AgentEvent =
   | NormalMessageEvent
   | StepStartEvent
   | StepCompleteEvent
+  | ArtifactEvent
   // 向后兼容
   | StreamEvent
   | ActionEvent
@@ -224,7 +262,7 @@ export type AgentEvent =
 // UI 消息类型
 // ============================================================================
 
-export type MessageType = 'user' | 'thought' | 'normal_message' | 'tool_call' | 'final_result' | 'error' | 'plan' | 'bdd' | 'architecture' | 'codegen';
+export type MessageType = 'user' | 'thought' | 'normal_message' | 'tool_call' | 'final_result' | 'error' | 'plan' | 'bdd' | 'architecture' | 'codegen' | 'artifact';
 
 export interface ChatItem {
   id: string;
@@ -248,6 +286,10 @@ export interface ChatItem {
   architectureFiles?: ArchitectureFile[];
   generatedFiles?: GeneratedFile[];
   summary?: string;
+  // Artifact 相关
+  artifacts?: ArtifactInfo[];
+  conversationId?: string;
+  mode?: 'react' | 'plan';
 }
 
 export interface ToolInfo {

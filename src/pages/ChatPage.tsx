@@ -1,13 +1,15 @@
 /**
  * ChatPage - 推理模式 + 规划模式页面
- * 包含会话历史侧边栏
+ * 包含会话历史侧边栏和 Artifact 预览侧边栏
  */
 
 import { useState, useCallback } from 'react';
 import { ChatContainer } from '@/components/ChatContainer';
 import { ChatInput } from '@/components/ChatInput';
 import { ConversationSidebar } from '@/components/ConversationSidebar';
+import { ArtifactPreviewSidebar } from '@/components/ArtifactPreviewSidebar';
 import { useChat } from '@/hooks/useChat';
+import { useArtifactStore } from '@/lib/useArtifactStore';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -28,6 +30,8 @@ export function ChatPage() {
     loadReactConversation,
     loadPlannerConversation,
   } = useChat();
+
+  const { isOpen: isArtifactOpen } = useArtifactStore();
 
   const [mode, setMode] = useState<ChatMode>('react');
   const [inputValue, setInputValue] = useState('');
@@ -56,7 +60,7 @@ export function ChatPage() {
 
   return (
     <div className="flex h-full">
-      {/* 侧边栏 */}
+      {/* 左侧会话历史侧边栏 */}
       <ConversationSidebar
         mode={mode}
         currentConversationId={currentConversationId}
@@ -112,6 +116,9 @@ export function ChatPage() {
           </div>
         </div>
       </div>
+
+      {/* 右侧 Artifact 预览侧边栏（占据空间布局） */}
+      {isArtifactOpen && <ArtifactPreviewSidebar />}
     </div>
   );
 }

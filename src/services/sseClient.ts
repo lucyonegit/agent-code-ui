@@ -2,7 +2,7 @@
  * SSE Client for connecting to base-agent server
  */
 
-import type { AgentEvent } from '../types/events';
+import type { AgentEvent, Plan } from '../types/events';
 
 const API_BASE = 'http://localhost:3002';
 
@@ -309,7 +309,7 @@ export interface ProjectDetail extends ProjectInfo {
  */
 export interface StoredMessage {
   id: string;
-  type: 'user' | 'thought' | 'normal_message' | 'tool_call' | 'tool_result' | 'final_result' | 'error';
+  type: 'user' | 'thought' | 'normal_message' | 'tool_call' | 'tool_result' | 'final_result' | 'error' | 'artifact_event' | 'plan_update';
   content: string;
   timestamp: number;
   // 工具调用相关 (type === 'tool_call' 时使用)
@@ -322,6 +322,8 @@ export interface StoredMessage {
   // 流式状态
   isStreaming?: boolean;
   isComplete?: boolean;
+  // 计划相关
+  plan?: Plan;
 }
 
 /**
@@ -499,7 +501,7 @@ export async function getPlannerConversations(): Promise<ConversationListItem[]>
  */
 export async function getPlannerConversation(conversationId: string): Promise<{
   conversation: ConversationDetail | null;
-  plan: unknown;
+  plan: Plan | null;
 }> {
   try {
     const response = await fetch(`${API_BASE}/api/planner/conversation/${conversationId}`);
@@ -528,5 +530,89 @@ export async function deletePlannerConversation(conversationId: string): Promise
   } catch (error) {
     console.error('Failed to delete planner conversation:', error);
     return { success: false };
+  }
+}
+
+// ============================================================================
+// Artifact API
+// ============================================================================
+
+import type { ArtifactInfo } from '../types/events';
+
+/**
+ * 获取 ReAct 会话的 artifact 列表
+ */
+export async function getReactArtifacts(conversationId: string): Promise<ArtifactInfo[]> {
+  try {
+    const response = await fetch(`${API_BASE}/api/react/conversation/${conversationId}/artifacts`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data.artifacts || [];
+  } catch (error) {
+    console.error('Failed to fetch react artifacts:', error);
+    return [];
+  }
+}
+
+/**
+ * 获取 ReAct 会话的单个 artifact 内容
+ */
+export async function getReactArtifactContent(
+  conversationId: string,
+  fileName: string
+): Promise<string> {
+  try {
+    const response = await fetch(
+      `${API_BASE}/api/react/conversation/${conversationId}/artifacts/${encodeURIComponent(fileName)}`
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data.content || '';
+  } catch (error) {
+    console.error('Failed to fetch react artifact content:', error);
+    return '';
+  }
+}
+
+/**
+ * 获取 Planner 会话的 artifact 列表
+ */
+export async function getPlannerArtifacts(conversationId: string): Promise<ArtifactInfo[]> {
+  try {
+    const response = await fetch(`${API_BASE}/api/planner/conversation/${conversationId}/artifacts`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data.artifacts || [];
+  } catch (error) {
+    console.error('Failed to fetch planner artifacts:', error);
+    return [];
+  }
+}
+
+/**
+ * 获取 Planner 会话的单个 artifact 内容
+ */
+export async function getPlannerArtifactContent(
+  conversationId: string,
+  fileName: string
+): Promise<string> {
+  try {
+    const response = await fetch(
+      `${API_BASE}/api/planner/conversation/${conversationId}/artifacts/${encodeURIComponent(fileName)}`
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data.content || '';
+  } catch (error) {
+    console.error('Failed to fetch planner artifact content:', error);
+    return '';
   }
 }

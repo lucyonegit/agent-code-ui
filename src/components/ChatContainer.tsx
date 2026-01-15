@@ -8,6 +8,7 @@ import { FinalAnswerCard } from './FinalAnswerCard';
 import { PlanCard } from './PlanCard';
 import { BDDCard } from './BDDCard';
 import { CodeTreeCard } from './CodeTreeCard';
+import { ArtifactCard } from './ArtifactCard';
 import './ChatContainer.css';
 
 interface ChatContainerProps {
@@ -67,6 +68,15 @@ export function ChatContainer({ messages, isLoading, onSelectPrompt }: ChatConta
             key={item.id} 
             files={item.generatedFiles} 
             summary={item.summary}
+          />
+        ) : null;
+      case 'artifact':
+        return item.artifacts && item.conversationId && item.mode ? (
+          <ArtifactCard
+            key={item.id}
+            conversationId={item.conversationId}
+            mode={item.mode}
+            artifacts={item.artifacts}
           />
         ) : null;
       case 'error':

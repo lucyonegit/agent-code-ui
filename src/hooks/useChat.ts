@@ -13,6 +13,7 @@ import type {
   BDDFeature,
   GeneratedFile,
   ArchitectureFile,
+  ArtifactInfo,
 } from '../types/events';
 import {
   sendMessage,
@@ -287,6 +288,21 @@ export function useChat() {
         setMessages(prev => [...prev, item]);
         break;
       }
+
+      // === artifact_event 事件（artifact 文件列表推送） ===
+      case 'artifact_event': {
+        const item: ChatItem = {
+          id: `artifact_${Date.now()}`,
+          type: 'artifact',
+          content: '',
+          timestamp: event.timestamp,
+          artifacts: event.artifacts as ArtifactInfo[],
+          conversationId: event.conversationId,
+          mode: event.mode,
+        };
+        setMessages(prev => [...prev, item]);
+        break;
+      }
     }
   }, []);
 
@@ -410,7 +426,11 @@ export function useChat() {
   }, []);
 
   // 将存储的消息转换为 ChatItem，合并 tool_result 到 tool_call
-  const convertStoredMessagesToChatItems = useCallback((messages: StoredMessage[]): ChatItem[] => {
+  const convertStoredMessagesToChatItems = useCallback((
+    messages: StoredMessage[],
+    conversationId?: string,
+    mode?: 'react' | 'plan'
+  ): ChatItem[] => {
     const chatItems: ChatItem[] = [];
     const toolResultMap = new Map<string, StoredMessage>();
 
@@ -442,6 +462,30 @@ export function useChat() {
           duration: toolResult?.duration,
           isStreaming: false,
           isComplete: true,
+        });
+      } else if (msg.type === 'artifact_event') {
+        // 解析存储的 artifact_event
+        try {
+          const artifacts = JSON.parse(msg.content);
+          chatItems.push({
+            id: msg.id,
+            type: 'artifact',
+            content: '',
+            timestamp: msg.timestamp,
+            artifacts,
+            conversationId: conversationId,
+            mode: mode,
+          });
+        } catch (e) {
+          console.error('Failed to parse artifacts from message content', e);
+        }
+      } else if (msg.type === 'plan_update' && msg.plan) {
+        chatItems.push({
+          id: msg.id,
+          type: 'plan',
+          content: msg.content,
+          timestamp: msg.timestamp,
+          plan: msg.plan,
         });
       } else {
         chatItems.push({
@@ -487,20 +531,36 @@ export function useChat() {
     const conversation = await getReactConversation(id);
     if (conversation) {
       setConversationId(id);
-      const chatItems = convertStoredMessagesToChatItems(conversation.messages);
+      const chatItems = convertStoredMessagesToChatItems(conversation.messages, id, 'react');
       setMessages(chatItems);
     }
-  }, []);
+  }, [convertStoredMessagesToChatItems]);
 
   // 加载规划模式会话
   const loadPlannerConversation = useCallback(async (id: string) => {
     const data = await getPlannerConversation(id);
     if (data.conversation) {
       setPlannerConversationId(id);
-      const chatItems = convertStoredMessagesToChatItems(data.conversation.messages);
-      setMessages(chatItems);
+      const chatItems = convertStoredMessagesToChatItems(data.conversation.messages, id, 'plan');
+
+      // 检查转换后的消息中是否已经包含计划卡片
+      const hasPlanInMessages = chatItems.some(m => m.type === 'plan');
+
+      // 如果消息中没有计划卡片但 data.plan 存在（针对旧会话），则作为回退添加
+      if (!hasPlanInMessages && data.plan) {
+        const fallbackPlanItem: ChatItem = {
+          id: `plan_fallback_${Date.now()}`,
+          type: 'plan',
+          content: data.plan.goal,
+          plan: data.plan,
+          timestamp: data.conversation.metadata.createdAt ? new Date(data.conversation.metadata.createdAt).getTime() : Date.now(),
+        };
+        setMessages([fallbackPlanItem, ...chatItems]);
+      } else {
+        setMessages(chatItems);
+      }
     }
-  }, []);
+  }, [convertStoredMessagesToChatItems]);
 
   const sendPlanner = useCallback((goal: string) => {
     if (!goal.trim() || isLoading) return;

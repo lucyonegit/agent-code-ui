@@ -1,0 +1,140 @@
+/**
+ * Artifact 文件列表卡片样式
+ */
+
+.artifact-card {
+  background: var(--card-background, #f8fafc);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 12px auto 12px 0; /* 靠左对齐 */
+  width: fit-content; /* 自适应内容宽度 */
+  min-width: 320px;
+  max-width: 600px; /* 限制宽度，针对大屏幕 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.artifact-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  border-color: var(--primary-color-alpha, rgba(59, 130, 246, 0.3));
+}
+
+.artifact-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.artifact-card-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary, #1e293b);
+}
+
+.artifact-card-toggle {
+  background: none;
+  border: none;
+  color: var(--primary-color, #3b82f6);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.artifact-card-toggle:hover {
+  background: var(--hover-background, rgba(59, 130, 246, 0.1));
+}
+
+.artifact-card-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.artifact-file-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 13px;
+}
+
+.artifact-file-item:hover {
+  border-color: var(--file-color, #3b82f6);
+  background: var(--hover-background, #f1f5f9);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.artifact-file-icon {
+  font-size: 16px;
+}
+
+.artifact-file-name {
+  color: var(--text-primary, #1e293b);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.artifact-file-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 12px;
+  background: var(--muted-background, #f1f5f9);
+  border: 1px dashed var(--border-color, #cbd5e1);
+  border-radius: 8px;
+  color: var(--text-muted, #64748b);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.artifact-file-more:hover {
+  border-color: var(--primary-color, #3b82f6);
+  color: var(--primary-color, #3b82f6);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .artifact-card {
+    background: var(--card-background-dark, #1e293b);
+    border-color: var(--border-color-dark, #334155);
+  }
+
+  .artifact-card-title {
+    color: var(--text-primary-dark, #f1f5f9);
+  }
+
+  .artifact-file-item {
+    background: var(--item-background-dark, #0f172a);
+    border-color: var(--border-color-dark, #334155);
+  }
+
+  .artifact-file-item:hover {
+    background: var(--hover-background-dark, #1e293b);
+  }
+
+  .artifact-file-name {
+    color: var(--text-primary-dark, #f1f5f9);
+  }
+
+  .artifact-file-more {
+    background: var(--muted-background-dark, #1e293b);
+    border-color: var(--border-color-dark, #475569);
+    color: var(--text-muted-dark, #94a3b8);
+  }
+}
