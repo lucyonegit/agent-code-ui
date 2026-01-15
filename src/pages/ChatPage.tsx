@@ -103,8 +103,8 @@ export function ChatPage() {
         </div>
 
         {/* 输入区域 */}
-        <div className="p-4 border-t border-border bg-background">
-          <div className="max-w-3xl mx-auto">
+        <div className="px-4 pt-4 pb-0 border-t border-border bg-background">
+          <div className="mx-auto">
             <ChatInput
               onSend={handleSend}
               isLoading={isLoading}
