@@ -4,7 +4,6 @@
 
 import type { WebContainer, WebContainerProcess } from '@webcontainer/api';
 
-// ============ 状态类型 ============
 
 /**
  * 容器状态枚举
@@ -30,7 +29,6 @@ export interface BootMetrics {
   cacheHit: boolean;        // 是否命中依赖缓存
 }
 
-// ============ 文件系统类型 ============
 
 /**
  * WebContainer 文件树结构
@@ -57,14 +55,12 @@ export interface FileDiff {
   dependenciesChanged: boolean;  // package.json 依赖是否变化
 }
 
-// ============ 配置类型 ============
 
 /**
  * Manager 配置选项
  */
 export interface ManagerConfig {
   enablePreBoot: boolean;         // 是否启用预启动
-  enableDependencyCache: boolean; // 是否启用依赖缓存
   cacheMaxSize: number;           // 最大缓存大小 (MB)
   cacheMaxAge: number;            // 缓存最大有效期 (ms)
   devCommand: string;             // 开发服务器启动命令
@@ -76,14 +72,12 @@ export interface ManagerConfig {
  */
 export const DEFAULT_CONFIG: ManagerConfig = {
   enablePreBoot: true,
-  enableDependencyCache: true,
   cacheMaxSize: 500,              // 500 MB
   cacheMaxAge: 7 * 24 * 60 * 60 * 1000, // 7 天
   devCommand: 'npm',
   devArgs: ['run', 'dev'],
 };
 
-// ============ 事件类型 ============
 
 /**
  * 容器事件类型
@@ -108,29 +102,6 @@ export interface ContainerEventHandlers {
 
 export type ContainerEventHandler<T extends ContainerEventType> = ContainerEventHandlers[T];
 
-// ============ 缓存类型 ============
-
-/**
- * 依赖缓存条目
- */
-export interface CacheEntry {
-  hash: string;              // package.json + lock 文件的哈希
-  timestamp: number;         // 创建时间
-  size: number;              // 大小 (bytes)
-  nodeModulesData: Blob;     // node_modules 快照
-}
-
-/**
- * 缓存统计信息
- */
-export interface CacheStats {
-  totalEntries: number;
-  totalSize: number;
-  hitCount: number;
-  missCount: number;
-}
-
-// ============ 进程类型 ============
 
 /**
  * 托管进程信息
@@ -151,14 +122,12 @@ export interface ExecResult {
   output: string;
 }
 
-// ============ Hook 类型 ============
 
 /**
  * useWebContainer Hook 选项
  */
 export interface UseWebContainerOptions {
   autoPreBoot?: boolean;
-  enableCache?: boolean;
   onStatusChange?: (status: ContainerStatus) => void;
   onOutput?: (data: string) => void;
   onError?: (error: Error) => void;
@@ -194,7 +163,6 @@ export interface UseWebContainerReturn {
   refreshKey: number;
 }
 
-// ============ 工具类型 ============
 
 /**
  * 移除 ANSI 转义序列的函数类型

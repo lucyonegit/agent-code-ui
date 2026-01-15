@@ -15,7 +15,6 @@
  */
 
 import type { WebContainer } from '@webcontainer/api';
-import type { FileTree } from './types';
 
 /**
  * OPFS 存储配置
@@ -94,7 +93,6 @@ export class OPFSStorage {
     return this.initPromise;
   }
 
-  // ============ 核心功能：WebContainer 文件系统快照 ============
 
   /**
    * 导出 WebContainer 文件系统并保存到 OPFS
@@ -132,19 +130,15 @@ export class OPFSStorage {
         return;
       }
 
-      // 创建项目目录
       const projectDir = await this.rootHandle.getDirectoryHandle(projectId, { create: true });
 
-      // 保存二进制快照
       const snapshotFile = await projectDir.getFileHandle('snapshot.bin', { create: true });
       const writable = await snapshotFile.createWritable();
-      // 使用类型断言以避免 TypeScript 严格模式问题
       await writable.write(new Blob([snapshot as unknown as ArrayBuffer]));
       await writable.close();
 
       const snapshotSize = snapshot.length;
 
-      // 保存元数据
       const metadata: SnapshotMetadata = {
         hash: pkgHash,
         timestamp: Date.now(),
@@ -180,7 +174,6 @@ export class OPFSStorage {
     try {
       const projectDir = await this.rootHandle.getDirectoryHandle(projectId);
 
-      // 读取元数据
       const metadataFile = await projectDir.getFileHandle('metadata.json');
       const metadataBlob = await metadataFile.getFile();
       const metadataText = await metadataBlob.text();
@@ -208,11 +201,10 @@ export class OPFSStorage {
       console.log(`[OPFSStorage] Restoring snapshot: ${projectId} (${(metadata.size / 1024 / 1024).toFixed(2)} MB)`);
 
       if (metadata.format === 'binary') {
-        // 二进制格式：直接 mount ArrayBuffer
         const arrayBuffer = await snapshotBlob.arrayBuffer();
         await container.mount(arrayBuffer);
       } else {
-        // JSON 格式（兼容旧缓存）
+        // JSON 格式
         const jsonText = await snapshotBlob.text();
         const tree = JSON.parse(jsonText);
         const restoredTree = this.restoreFileTree(tree);
@@ -290,7 +282,6 @@ export class OPFSStorage {
     }
   }
 
-  // ============ 项目管理 ============
 
   /**
    * 检查项目快照是否存在且有效
@@ -414,75 +405,6 @@ export class OPFSStorage {
     }
   }
 
-  // ============ 旧版兼容 API（保留用于简单场景） ============
-
-  /**
-   * 保存文件树（不包含 node_modules）
-   */
-  async saveProject(projectId: string, files: FileTree, hash: string): Promise<void> {
-    await this.init();
-    if (!this.rootHandle) return;
-
-    try {
-      const projectDir = await this.rootHandle.getDirectoryHandle(projectId, { create: true });
-
-      // 保存元数据
-      const metadata: SnapshotMetadata = {
-        hash,
-        timestamp: Date.now(),
-        format: 'json',
-        hasNodeModules: false,
-        size: JSON.stringify(files).length,
-      };
-
-      const metadataFile = await projectDir.getFileHandle('metadata.json', { create: true });
-      const metaWritable = await metadataFile.createWritable();
-      await metaWritable.write(JSON.stringify(metadata));
-      await metaWritable.close();
-
-      // 保存文件树
-      const treeFile = await projectDir.getFileHandle('tree.json', { create: true });
-      const treeWritable = await treeFile.createWritable();
-      await treeWritable.write(JSON.stringify(files));
-      await treeWritable.close();
-
-      console.log(`[OPFSStorage] Project tree saved: ${projectId}`);
-    } catch (error) {
-      console.error('[OPFSStorage] Save project failed:', error);
-    }
-  }
-
-  /**
-   * 加载文件树（旧版 API）
-   */
-  async loadProject(projectId: string): Promise<FileTree | null> {
-    await this.init();
-    if (!this.rootHandle) return null;
-    try {
-      const projectDir = await this.rootHandle.getDirectoryHandle(projectId);
-      const treeFile = await projectDir.getFileHandle('tree.json');
-      const treeBlob = await treeFile.getFile();
-      const treeText = await treeBlob.text();
-      return JSON.parse(treeText);
-    } catch {
-      return null;
-    }
-  }
-
-  /**
-   * 检查项目是否存在
-   */
-  async hasProject(projectId: string): Promise<boolean> {
-    await this.init();
-    if (!this.rootHandle) return false;
-
-    try {
-      await this.rootHandle.getDirectoryHandle(projectId);
-      return true;
-    } catch {
-      return false;
-    }
-  }
 }
 
 // 单例实例

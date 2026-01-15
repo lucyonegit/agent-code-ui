@@ -61,9 +61,7 @@ export function CodePanel({ files, tree, summary, projectId }: CodePanelProps) {
   const [selectedFile, setSelectedFile] = useState<GeneratedFile | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set(['src']));
 
-  const { url, status, output, refreshKey, mount, update, smartStart } = useWebContainer({
-    enableCache: true,
-  });
+  const { url, status, output, refreshKey, mount, update, smartStart } = useWebContainer({});
   
   // 跟踪之前的 tree 以区分首次挂载和后续更新
   const prevTreeRef = useRef<any>(null);

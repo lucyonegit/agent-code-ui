@@ -35,7 +35,6 @@ import {
 export function useWebContainer(options: UseWebContainerOptions = {}): UseWebContainerReturn {
   const {
     autoPreBoot = true,
-    enableCache = true,
     onStatusChange,
     onOutput,
     onError,
@@ -58,7 +57,6 @@ export function useWebContainer(options: UseWebContainerOptions = {}): UseWebCon
   useEffect(() => {
     const manager = getWebContainerManager({
       enablePreBoot: autoPreBoot,
-      enableDependencyCache: enableCache,
     });
     managerRef.current = manager;
 
@@ -105,7 +103,7 @@ export function useWebContainer(options: UseWebContainerOptions = {}): UseWebCon
       manager.off('error', handleError);
       manager.off('metrics', handleMetrics);
     };
-  }, [autoPreBoot, enableCache, onStatusChange, onOutput, onError, onServerReady]);
+  }, [autoPreBoot, onStatusChange, onOutput, onError, onServerReady]);
 
   /**
    * 挂载文件并启动（首次）

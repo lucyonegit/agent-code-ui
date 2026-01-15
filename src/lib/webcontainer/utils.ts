@@ -4,10 +4,6 @@
 
 import type { FileTree, FileDiff } from './types';
 
-/**
- * 移除 ANSI 转义序列和控制字符
- * 包括颜色代码、光标控制、清屏等
- */
 export function stripAnsi(str: string): string {
   const ESC = String.fromCharCode(27); // \x1b
   const BEL = String.fromCharCode(7);  // \x07
@@ -144,7 +140,6 @@ export function computeFileDiff(oldTree: FileTree | null, newTree: FileTree): Fi
   const modified: string[] = [];
   const removed: string[] = [];
 
-  // 检查新增和修改
   for (const path of newPaths) {
     if (!oldPaths.has(path)) {
       added.push(path);
@@ -157,7 +152,6 @@ export function computeFileDiff(oldTree: FileTree | null, newTree: FileTree): Fi
     }
   }
 
-  // 检查删除
   for (const path of oldPaths) {
     if (!newPaths.has(path)) {
       removed.push(path);

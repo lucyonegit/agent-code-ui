@@ -18,11 +18,9 @@ import type {
 } from './types';
 import { DEFAULT_CONFIG } from './types';
 import { stripAnsi, hasDependencyChanged, extractPackageJson, sha256Hash } from './utils';
-import { DependencyCache, getDependencyCache } from './DependencyCache';
 import { PerformanceMonitor, getPerformanceMonitor } from './PerformanceMonitor';
 import { OPFSStorage, getOPFSStorage } from './OPFSStorage';
 
-// 全局单例状态
 let globalInstance: WebContainerManager | null = null;
 
 /**
@@ -33,7 +31,6 @@ export class WebContainerManager {
   private bootPromise: Promise<WebContainer> | null = null;
   private status: ContainerStatus = 'idle';
   private config: ManagerConfig;
-  private cache: DependencyCache;
   private monitor: PerformanceMonitor;
   private opfs: OPFSStorage;
   private processes: Map<string, ManagedProcess> = new Map();
@@ -43,12 +40,10 @@ export class WebContainerManager {
   private currentProjectId: string | null = null;
   private outputBuffer: string = '';
 
-  // 事件监听器
   private listeners: Map<ContainerEventType, Set<ContainerEventHandler<any>>> = new Map();
 
   private constructor(config?: Partial<ManagerConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config };
-    this.cache = getDependencyCache();
     this.monitor = getPerformanceMonitor();
     this.opfs = getOPFSStorage();
   }
@@ -73,7 +68,6 @@ export class WebContainerManager {
     }
   }
 
-  // ============ 核心生命周期 ============
 
   /**
    * 启动 WebContainer
@@ -134,7 +128,6 @@ export class WebContainerManager {
    * 销毁实例
    */
   async destroy(): Promise<void> {
-    // 终止所有进程
     for (const [id] of this.processes) {
       await this.killProcess(id);
     }
@@ -144,7 +137,6 @@ export class WebContainerManager {
       this.devProcess = null;
     }
 
-    // 重置状态
     this.container = null;
     this.bootPromise = null;
     this.serverUrl = null;
@@ -155,7 +147,6 @@ export class WebContainerManager {
     console.log('[WebContainerManager] Destroyed');
   }
 
-  // ============ 文件操作 ============
 
   /**
    * 挂载文件树
@@ -173,7 +164,6 @@ export class WebContainerManager {
     this.monitor.recordMountTime(mountTime);
 
     this.currentTree = files;
-    this.appendOutput(`Files mounted in ${mountTime}ms\n`);
   }
 
   /**
@@ -222,29 +212,16 @@ export class WebContainerManager {
     await container.fs.rm(path, { recursive: true });
   }
 
-  // ============ 依赖管理 ============
 
   /**
    * 安装依赖
    */
-  async installDependencies(options?: InstallOptions): Promise<void> {
+  async installDependencies(_options?: InstallOptions): Promise<void> {
     const container = await this.boot();
 
     this.setStatus('installing');
     this.monitor.startTimer('install');
     this.appendOutput('Installing dependencies...\n');
-
-    // 尝试从缓存恢复（如果启用）
-    if (this.config.enableDependencyCache && options?.useCache !== false && !options?.force) {
-      const restored = await this.tryRestoreFromCache();
-      if (restored) {
-        const installTime = this.monitor.endTimer('install');
-        this.monitor.recordInstallTime(installTime);
-        this.monitor.recordCacheHit(true);
-        this.appendOutput(`Dependencies restored from cache in ${installTime}ms\n`);
-        return;
-      }
-    }
 
     this.monitor.recordCacheHit(false);
 
@@ -265,58 +242,10 @@ export class WebContainerManager {
       throw new Error(`npm install failed with exit code ${exitCode}`);
     }
 
-    // 保存到缓存
-    if (this.config.enableDependencyCache) {
-      await this.saveToCache();
-    }
-
     this.appendOutput(`Dependencies installed in ${installTime}ms\n`);
   }
 
-  private async tryRestoreFromCache(): Promise<boolean> {
-    if (!this.currentTree) return false;
 
-    try {
-      const packageJson = extractPackageJson(this.currentTree);
-      if (!packageJson) return false;
-
-      await this.cache.init();
-      const hash = await this.cache.computeHash(packageJson);
-      const entry = await this.cache.get(hash);
-
-      if (!entry) return false;
-
-      // TODO: 实现 node_modules 快照恢复
-      // 目前 WebContainer API 不支持直接恢复快照
-      // 这里需要后续版本支持
-      console.log('[WebContainerManager] Cache hit, but snapshot restore not yet implemented');
-      return false;
-    } catch (error) {
-      console.error('[WebContainerManager] Cache restore failed:', error);
-      return false;
-    }
-  }
-
-  private async saveToCache(): Promise<void> {
-    if (!this.currentTree) return;
-
-    try {
-      const packageJson = extractPackageJson(this.currentTree);
-      if (!packageJson) return;
-
-      await this.cache.init();
-      const hash = await this.cache.computeHash(packageJson);
-
-      // TODO: 实现 node_modules 快照创建
-      // 目前 WebContainer API 不支持导出文件系统
-      // 这里需要后续版本支持
-      console.log('[WebContainerManager] Would save to cache with hash:', hash.substring(0, 8));
-    } catch (error) {
-      console.error('[WebContainerManager] Cache save failed:', error);
-    }
-  }
-
-  // ============ 进程管理 ============
 
   /**
    * 执行命令
@@ -393,7 +322,6 @@ export class WebContainerManager {
     }
   }
 
-  // ============ 完整流程 ============
 
   /**
    * 挂载并启动（首次启动的完整流程）
@@ -412,7 +340,7 @@ export class WebContainerManager {
 
     // 保存到 OPFS（异步，不阻塞）
     if (projectId && this.opfs.isSupported()) {
-      this.saveToOPFS(projectId, files).catch(err => {
+      this.saveSnapshotToOPFS(projectId).catch(err => {
         console.warn('[WebContainerManager] OPFS save failed:', err);
       });
     }
@@ -435,13 +363,12 @@ export class WebContainerManager {
 
     // 更新 OPFS 缓存
     if (this.currentProjectId && this.opfs.isSupported()) {
-      this.saveToOPFS(this.currentProjectId, files).catch(err => {
+      this.saveSnapshotToOPFS(this.currentProjectId).catch(err => {
         console.warn('[WebContainerManager] OPFS update failed:', err);
       });
     }
   }
 
-  // ============ OPFS 持久化（完整文件系统快照） ============
 
   /**
    * 保存完整文件系统快照到 OPFS
@@ -586,7 +513,7 @@ export class WebContainerManager {
       return this.opfs.hasValidSnapshot(projectId, expectedHash);
     }
 
-    return this.opfs.hasProject(projectId);
+    return (await this.opfs.listProjects()).includes(projectId);
   }
 
   /**
@@ -624,34 +551,6 @@ export class WebContainerManager {
     };
   }
 
-  // 保留旧版 API 用于向后兼容
-  async saveToOPFS(projectId: string, files: FileTree): Promise<void> {
-    if (!this.opfs.isSupported()) return;
-
-    try {
-      const packageJson = extractPackageJson(files) || '';
-      const hash = await sha256Hash(packageJson);
-      await this.opfs.saveProject(projectId, files, hash);
-    } catch (error) {
-      console.error('[WebContainerManager] OPFS save error:', error);
-    }
-  }
-
-  async loadFromOPFS(projectId: string): Promise<FileTree | null> {
-    if (!this.opfs.isSupported()) return null;
-    return this.opfs.loadProject(projectId);
-  }
-
-  async restoreFromOPFS(projectId: string): Promise<string | null> {
-    const files = await this.loadFromOPFS(projectId);
-    if (!files) return null;
-    return this.mountAndRun(files, projectId);
-  }
-
-  async hasOPFSCache(projectId: string): Promise<boolean> {
-    if (!this.opfs.isSupported()) return false;
-    return this.opfs.hasProject(projectId);
-  }
 
   // ============ 事件系统 ============
 
@@ -685,8 +584,6 @@ export class WebContainerManager {
     }
   }
 
-  // ============ 状态和输出 ============
-
   private setStatus(status: ContainerStatus): void {
     if (this.status !== status) {
       this.status = status;
@@ -706,13 +603,10 @@ export class WebContainerManager {
     this.container.on('error', (error) => {
       console.error('[WebContainerManager] Container error:', error);
       this.setStatus('error');
-      // Ensure we emit a proper Error object
       const err = error instanceof Error ? error : new Error(String(error));
       this.emit('error', err);
     });
   }
-
-  // ============ Getters ============
 
   getStatus(): ContainerStatus {
     return this.status;

@@ -13,16 +13,10 @@ export class PerformanceMonitor {
   private metrics: BootMetrics[] = [];
   private currentMetrics: Partial<BootMetrics> = {};
 
-  /**
-   * 开始计时
-   */
   startTimer(name: string): void {
     this.timers.set(name, performance.now());
   }
 
-  /**
-   * 结束计时并返回耗时（毫秒）
-   */
   endTimer(name: string): number {
     const startTime = this.timers.get(name);
     if (startTime === undefined) {
@@ -35,44 +29,26 @@ export class PerformanceMonitor {
     return Math.round(elapsed);
   }
 
-  /**
-   * 记录启动时间
-   */
   recordBootTime(time: number): void {
     this.currentMetrics.bootTime = time;
   }
 
-  /**
-   * 记录挂载时间
-   */
   recordMountTime(time: number): void {
     this.currentMetrics.mountTime = time;
   }
 
-  /**
-   * 记录安装时间
-   */
   recordInstallTime(time: number): void {
     this.currentMetrics.installTime = time;
   }
 
-  /**
-   * 记录服务器就绪时间
-   */
   recordServerReadyTime(time: number): void {
     this.currentMetrics.serverReadyTime = time;
   }
 
-  /**
-   * 记录缓存命中状态
-   */
   recordCacheHit(hit: boolean): void {
     this.currentMetrics.cacheHit = hit;
   }
 
-  /**
-   * 完成当前度量记录
-   */
   finishMetrics(): BootMetrics {
     const metrics: BootMetrics = {
       bootTime: this.currentMetrics.bootTime ?? 0,
@@ -134,9 +110,6 @@ export class PerformanceMonitor {
     return this.metrics.length > 0 ? this.metrics[this.metrics.length - 1] : null;
   }
 
-  /**
-   * 生成性能报告
-   */
   generateReport(): string {
     if (this.metrics.length === 0) {
       return 'No metrics recorded yet.';
@@ -169,9 +142,6 @@ Last Session:
 `.trim();
   }
 
-  /**
-   * 重置所有度量
-   */
   reset(): void {
     this.timers.clear();
     this.metrics = [];
@@ -179,7 +149,6 @@ Last Session:
   }
 }
 
-// 单例实例
 let monitorInstance: PerformanceMonitor | null = null;
 
 /**

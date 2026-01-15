@@ -7,7 +7,6 @@
 export { WebContainerManager, getWebContainerManager } from './WebContainerManager';
 
 // 缓存系统
-export { DependencyCache, getDependencyCache } from './DependencyCache';
 export { OPFSStorage, getOPFSStorage } from './OPFSStorage';
 
 // 性能监控
@@ -40,8 +39,6 @@ export type {
   ContainerEventType,
   ContainerEventHandler,
   ContainerEventHandlers,
-  CacheEntry,
-  CacheStats,
   ManagedProcess,
   ExecResult,
   UseWebContainerOptions,
