@@ -122,22 +122,21 @@ export function useWebContainer(options: UseWebContainerOptions = {}): UseWebCon
   /**
    * 更新文件（增量更新）
    */
-  const update = useCallback(async (files: FileTree, previousFiles?: FileTree): Promise<void> => {
+  const update = useCallback(async (files: FileTree): Promise<boolean> => {
     const manager = managerRef.current;
-    if (!manager) return;
+    if (!manager) return false;
 
-    const prev = previousFiles || prevTreeRef.current;
     prevTreeRef.current = files;
 
-    // 如果是首次，走完整挂载流程
     if (isFirstMountRef.current) {
-      return mount(files);
+      await mount(files);
+      return true;
     }
 
-    await manager.updateAndRefresh(files, prev || undefined);
+    const success = await manager.updateAndRefresh(files);
 
-    // 触发刷新
     setRefreshKey(k => k + 1);
+    return success;
   }, [mount]);
 
   /**

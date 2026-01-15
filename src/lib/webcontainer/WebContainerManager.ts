@@ -168,24 +168,25 @@ export class WebContainerManager {
 
   /**
    * 更新文件树（智能增量更新）
+   * @returns 包含更新结果的对象
    */
-  async update(files: FileTree, options?: UpdateOptions): Promise<void> {
+  async update(files: FileTree, options?: UpdateOptions): Promise<{ didInstall: boolean }> {
     const container = await this.boot();
 
     this.setStatus('mounting');
 
-    // 直接挂载新文件（WebContainer 会处理增量更新）
     await container.mount(files as unknown as FileSystemTree);
 
     const prevTree = this.currentTree;
     this.currentTree = files;
 
-    // 检查是否需要重新安装依赖
+    let didInstall = false;
     if (options?.forceInstall || hasDependencyChanged(prevTree, files)) {
       await this.installDependencies({ useCache: true });
+      didInstall = true;
     }
 
-    this.appendOutput('Files updated\n');
+    return { didInstall };
   }
 
   /**
@@ -274,12 +275,22 @@ export class WebContainerManager {
 
   /**
    * 启动开发服务器
+   * @param force - 是否强制重启（如果已在运行）
    */
-  async startDevServer(): Promise<string> {
+  async startDevServer(force: boolean = false): Promise<string> {
     const container = await this.boot();
 
-    if (this.serverUrl) {
+    // 如果已经在运行且不要求强制重启，直接返回现有 URL
+    if (this.serverUrl && !force) {
       return this.serverUrl;
+    }
+
+    // 如果要求强制重启，先终止现有进程
+    if (force && this.devProcess) {
+      console.log('[WebContainerManager] Terminating existing dev server for restart...');
+      this.devProcess.kill();
+      this.devProcess = null;
+      this.serverUrl = null;
     }
 
     this.setStatus('running');
@@ -295,7 +306,6 @@ export class WebContainerManager {
       }
     }));
 
-    // 等待服务器就绪
     return new Promise((resolve) => {
       container.on('server-ready', (port, url) => {
         const serverReadyTime = this.monitor.endTimer('serverReady');
@@ -350,22 +360,27 @@ export class WebContainerManager {
 
   /**
    * 更新并刷新（多轮对话时的增量更新）
+   * @returns 操作是否成功
    */
-  async updateAndRefresh(files: FileTree, previousFiles?: FileTree): Promise<void> {
-    await this.update(files);
+  async updateAndRefresh(files: FileTree): Promise<boolean> {
+    try {
+      // 执行增量更新，获取依赖是否变化的信号
+      const { didInstall } = await this.update(files);
 
-    // 如果依赖变化或服务器未运行，需要重新安装和启动
-    if (hasDependencyChanged(previousFiles || this.currentTree, files) || !this.serverUrl) {
-      await this.installDependencies({ useCache: true });
-      await this.startDevServer();
-    }
-    // 否则 Vite HMR 会自动处理
+      // 如果安装了依赖或者服务器并未运行，则需要启动/重启服务器
+      // 如果 didInstall 为 true，则强制重启服务器
+      await this.startDevServer(didInstall || !this.serverUrl);
 
-    // 更新 OPFS 缓存
-    if (this.currentProjectId && this.opfs.isSupported()) {
-      this.saveSnapshotToOPFS(this.currentProjectId).catch(err => {
-        console.warn('[WebContainerManager] OPFS update failed:', err);
-      });
+      if (this.currentProjectId && this.opfs.isSupported()) {
+        this.saveSnapshotToOPFS(this.currentProjectId).catch(err => {
+          console.warn('[WebContainerManager] OPFS update failed:', err);
+        });
+      }
+
+      return true;
+    } catch (error) {
+      console.error('[WebContainerManager] updateAndRefresh failed:', error);
+      return false;
     }
   }
 
@@ -446,10 +461,8 @@ export class WebContainerManager {
         const restored = await this.restoreSnapshotFromOPFS(projectId, expectedHash);
 
         if (restored) {
-          // 快照恢复成功，修复可执行权限后启动服务器
-          // JSON 导出会丢失文件权限，需要修复 .bin 目录下的可执行文件
-          await this.fixBinPermissions();
-
+          // 快照恢复成功，直接启动服务器
+          // 二进制快照会自动保留文件执行权限
           const url = await this.startDevServer();
           const metrics = this.monitor.finishMetrics();
           this.emit('metrics', metrics);
@@ -476,30 +489,6 @@ export class WebContainerManager {
     return url;
   }
 
-  /**
-   * 修复 node_modules/.bin 下可执行文件的权限
-   * JSON 导出时会丢失执行权限，需要恢复
-   */
-  private async fixBinPermissions(): Promise<void> {
-    if (!this.container) return;
-
-    try {
-      console.log('[WebContainerManager] Fixing bin permissions...');
-
-      // 方法1: 使用 chmod 修复 .bin 目录权限
-      // WebContainer 支持 spawn 命令
-      const process = await this.container.spawn('sh', [
-        '-c',
-        'chmod -R +x node_modules/.bin 2>/dev/null || true'
-      ]);
-      await process.exit;
-
-      console.log('[WebContainerManager] Bin permissions fixed');
-    } catch (error) {
-      console.warn('[WebContainerManager] Failed to fix bin permissions:', error);
-      // 不抛出错误，让程序继续尝试启动
-    }
-  }
 
   /**
    * 检查是否有有效的 OPFS 快照

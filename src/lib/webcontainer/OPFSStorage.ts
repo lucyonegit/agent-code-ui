@@ -204,7 +204,6 @@ export class OPFSStorage {
         const arrayBuffer = await snapshotBlob.arrayBuffer();
         await container.mount(arrayBuffer);
       } else {
-        // JSON 格式
         const jsonText = await snapshotBlob.text();
         const tree = JSON.parse(jsonText);
         const restoredTree = this.restoreFileTree(tree);

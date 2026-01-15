@@ -83,7 +83,7 @@ export function CodePanel({ files, tree, summary, projectId }: CodePanelProps) {
         isFirstMountRef.current = false;
       } else if (tree !== prevTreeRef.current) {
         // 后续更新：使用增量更新，利用 Vite HMR
-        update(fileTree, prevTreeRef.current);
+        update(fileTree);
       }
       prevTreeRef.current = tree;
     }

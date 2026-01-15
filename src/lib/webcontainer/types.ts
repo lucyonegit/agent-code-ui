@@ -147,7 +147,7 @@ export interface UseWebContainerReturn {
 
   // 核心操作
   mount: (files: FileTree) => Promise<void>;
-  update: (files: FileTree, previousFiles?: FileTree) => Promise<void>;
+  update: (files: FileTree) => Promise<boolean>;
   refresh: () => void;
   restart: () => Promise<void>;
   smartStart: (files: FileTree, projectId: string) => Promise<void>;  // OPFS 缓存启动
