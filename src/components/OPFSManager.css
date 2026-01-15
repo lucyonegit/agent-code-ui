@@ -1,0 +1,339 @@
+.opfs-manager-trigger {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--accent)) 100%
+  );
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), 0 0 0 4px rgba(var(--primary), 0.1);
+  transition: all 0.3s ease;
+}
+
+.opfs-manager-trigger:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25),
+    0 0 0 6px rgba(var(--primary), 0.15);
+}
+
+.opfs-manager-trigger:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.opfs-manager-trigger svg {
+  color: white;
+  width: 22px;
+  height: 22px;
+}
+
+.opfs-manager-panel {
+  position: fixed;
+  bottom: 88px;
+  right: 24px;
+  z-index: 9998;
+  width: 380px;
+  max-height: 480px;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2), 0 0 1px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(20px);
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.opfs-manager-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid hsl(var(--border));
+  background: linear-gradient(to bottom, hsl(var(--muted) / 0.3), transparent);
+}
+
+.opfs-manager-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: hsl(var(--foreground));
+  margin: 0;
+}
+
+.opfs-manager-header h3 svg {
+  color: hsl(var(--primary));
+}
+
+.opfs-manager-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: hsl(var(--muted));
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: hsl(var(--muted-foreground));
+  transition: all 0.2s;
+}
+
+.opfs-manager-close:hover {
+  background: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+}
+
+.opfs-manager-storage {
+  padding: 16px 20px;
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--muted) / 0.2);
+}
+
+.opfs-manager-storage-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.opfs-manager-storage-bar {
+  width: 100%;
+  height: 6px;
+  background: hsl(var(--muted));
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.opfs-manager-storage-fill {
+  height: 100%;
+  background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)));
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.opfs-manager-storage-text {
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+}
+
+.opfs-manager-storage-text strong {
+  color: hsl(var(--foreground));
+}
+
+.opfs-manager-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.opfs-manager-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: hsl(var(--muted-foreground));
+  text-align: center;
+}
+
+.opfs-manager-empty svg {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.opfs-manager-empty p {
+  font-size: 13px;
+  margin: 0;
+}
+
+.opfs-manager-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--border) / 0.5);
+  margin-bottom: 8px;
+  transition: all 0.2s;
+}
+
+.opfs-manager-item:hover {
+  border-color: hsl(var(--primary) / 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.opfs-manager-item:last-child {
+  margin-bottom: 0;
+}
+
+.opfs-manager-item-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: hsl(var(--primary) / 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.opfs-manager-item-icon svg {
+  width: 18px;
+  height: 18px;
+  color: hsl(var(--primary));
+}
+
+.opfs-manager-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.opfs-manager-item-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.opfs-manager-item-meta {
+  font-size: 11px;
+  color: hsl(var(--muted-foreground));
+  display: flex;
+  gap: 8px;
+}
+
+.opfs-manager-item-delete {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: hsl(var(--muted-foreground));
+  transition: all 0.2s;
+  opacity: 0;
+}
+
+.opfs-manager-item:hover .opfs-manager-item-delete {
+  opacity: 1;
+}
+
+.opfs-manager-item-delete:hover {
+  background: hsl(var(--destructive) / 0.1);
+  color: hsl(var(--destructive));
+}
+
+.opfs-manager-footer {
+  padding: 12px 20px;
+  border-top: 1px solid hsl(var(--border));
+  display: flex;
+  gap: 8px;
+}
+
+.opfs-manager-footer button {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.opfs-manager-footer button:hover {
+  background: hsl(var(--muted));
+}
+
+.opfs-manager-footer button.destructive {
+  background: hsl(var(--destructive) / 0.1);
+  border-color: hsl(var(--destructive) / 0.3);
+  color: hsl(var(--destructive));
+}
+
+.opfs-manager-footer button.destructive:hover {
+  background: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+}
+
+.opfs-manager-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.opfs-manager-loading .spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid hsl(var(--muted));
+  border-top-color: hsl(var(--primary));
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.opfs-manager-not-supported {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.opfs-manager-not-supported svg {
+  width: 40px;
+  height: 40px;
+  color: hsl(var(--destructive));
+  margin-bottom: 12px;
+}
+
+.opfs-manager-not-supported p {
+  font-size: 13px;
+  color: hsl(var(--muted-foreground));
+  margin: 0;
+}

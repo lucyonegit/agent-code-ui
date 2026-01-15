@@ -8,6 +8,7 @@ import { useTheme } from './hooks/useTheme';
 import { Button } from '@/components/ui/button';
 import { Moon, Sun, MessageSquare, Code2 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { OPFSManager } from '@/components/OPFSManager';
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const { theme, toggleTheme } = useTheme();
@@ -66,6 +67,9 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 overflow-hidden">
         {children}
       </main>
+
+      {/* OPFS 管理浮窗 */}
+      <OPFSManager />
     </div>
   );
 }

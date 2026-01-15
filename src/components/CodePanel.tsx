@@ -63,16 +63,21 @@ export function CodePanel({ files, tree, summary, projectId }: CodePanelProps) {
 
   const { url, status, output, refreshKey, mount, update, smartStart } = useWebContainer({});
   
-  // 跟踪之前的 tree 以区分首次挂载和后续更新
+  // 跟踪之前的 tree 和 projectId 以区分首次挂载和后续更新
   const prevTreeRef = useRef<any>(null);
+  const prevProjectIdRef = useRef<string | undefined>(undefined);
   const isFirstMountRef = useRef(true);
 
   useEffect(() => {
     if (tree) {
       // Cast tree to the expected type
       const fileTree = tree as Record<string, any>;
-      if (isFirstMountRef.current) {
-        // 首次挂载：使用 smartStart 支持 OPFS 缓存
+      
+      // 检测项目切换：projectId 变化时，需要重新执行 smartStart
+      const isProjectSwitch = projectId !== prevProjectIdRef.current && projectId !== undefined;
+      
+      if (isFirstMountRef.current || isProjectSwitch) {
+        // 首次挂载或项目切换：使用 smartStart 支持 OPFS 缓存
         if (projectId) {
           // 有项目 ID，使用智能启动（优先从 OPFS 恢复）
           smartStart(fileTree, projectId);
@@ -81,13 +86,15 @@ export function CodePanel({ files, tree, summary, projectId }: CodePanelProps) {
           mount(fileTree);
         }
         isFirstMountRef.current = false;
+        prevProjectIdRef.current = projectId;
       } else if (tree !== prevTreeRef.current) {
-        // 后续更新：使用增量更新，利用 Vite HMR
+        // 同一项目的后续更新：使用增量更新，利用 Vite HMR
         update(fileTree);
       }
       prevTreeRef.current = tree;
     }
   }, [tree, mount, update, smartStart, projectId]);
+
 
   // 创建自定义主题，统一字体设置
   const customFontFamily = 'Menlo, Monaco, Consolas, "Andale Mono", "Ubuntu Mono", "Courier New", monospace';
