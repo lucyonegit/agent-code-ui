@@ -16,6 +16,7 @@ interface CodePanelProps {
   files: GeneratedFile[];
   tree?: unknown;
   summary?: string;
+  projectId?: string;  // 项目 ID（用于 OPFS 缓存）
 }
 
 interface TreeNode {
@@ -54,13 +55,15 @@ function parseTreeToFiles(tree: any, basePath: string = ''): GeneratedFile[] {
   return files;
 }
 
-export function CodePanel({ files, tree, summary }: CodePanelProps) {
+export function CodePanel({ files, tree, summary, projectId }: CodePanelProps) {
   const { isDark } = useTheme();
   const [activeTab, setActiveTab] = useState<'code' | 'preview'>('code');
   const [selectedFile, setSelectedFile] = useState<GeneratedFile | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set(['src']));
 
-  const { url, status, output, refreshKey, mountAndRun, remount } = useWebContainer();
+  const { url, status, output, refreshKey, mount, update, smartStart } = useWebContainer({
+    enableCache: true,
+  });
   
   // 跟踪之前的 tree 以区分首次挂载和后续更新
   const prevTreeRef = useRef<any>(null);
@@ -68,17 +71,25 @@ export function CodePanel({ files, tree, summary }: CodePanelProps) {
 
   useEffect(() => {
     if (tree) {
+      // Cast tree to the expected type
+      const fileTree = tree as Record<string, any>;
       if (isFirstMountRef.current) {
-        // 首次挂载：完整安装依赖并启动服务器
-        mountAndRun(tree);
+        // 首次挂载：使用 smartStart 支持 OPFS 缓存
+        if (projectId) {
+          // 有项目 ID，使用智能启动（优先从 OPFS 恢复）
+          smartStart(fileTree, projectId);
+        } else {
+          // 没有项目 ID，使用普通挂载
+          mount(fileTree);
+        }
         isFirstMountRef.current = false;
       } else if (tree !== prevTreeRef.current) {
         // 后续更新：使用增量更新，利用 Vite HMR
-        remount(tree, prevTreeRef.current);
+        update(fileTree, prevTreeRef.current);
       }
       prevTreeRef.current = tree;
     }
-  }, [tree, mountAndRun, remount]);
+  }, [tree, mount, update, smartStart, projectId]);
 
   // 创建自定义主题，统一字体设置
   const customFontFamily = 'Menlo, Monaco, Consolas, "Andale Mono", "Ubuntu Mono", "Courier New", monospace';

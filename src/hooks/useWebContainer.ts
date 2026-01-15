@@ -1,254 +1,252 @@
+/**
+ * useWebContainer Hook
+ * 高级封装的 React Hook，提供 WebContainer 的完整功能
+ */
+
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { WebContainer } from '@webcontainer/api';
+import {
+  WebContainerManager,
+  getWebContainerManager,
+  type ContainerStatus,
+  type FileTree,
+  type BootMetrics,
+  type ExecResult,
+  type UseWebContainerOptions,
+  type UseWebContainerReturn,
+} from '../lib/webcontainer';
 
 /**
- * 移除 ANSI 转义序列和控制字符
- * 包括颜色代码、光标控制、清屏等
+ * WebContainer React Hook
+ * 
+ * @example
+ * ```tsx
+ * const { status, url, mount, update, isReady } = useWebContainer({
+ *   enableCache: true,
+ *   onStatusChange: (s) => console.log('Status:', s),
+ * });
+ * 
+ * // 挂载文件并启动
+ * await mount(fileTree);
+ * 
+ * // 更新文件（利用 HMR）
+ * await update(newFileTree, oldFileTree);
+ * ```
  */
-function stripAnsi(str: string): string {
-  // 使用 String.fromCharCode 构建控制字符，避免 ESLint no-control-regex 错误
-  const ESC = String.fromCharCode(27); // \x1b
-  const BEL = String.fromCharCode(7);  // \x07
+export function useWebContainer(options: UseWebContainerOptions = {}): UseWebContainerReturn {
+  const {
+    autoPreBoot = true,
+    enableCache = true,
+    onStatusChange,
+    onOutput,
+    onError,
+    onServerReady,
+  } = options;
 
-  // 匹配 ANSI 转义序列:
-  // ESC[ 开头，后跟参数和命令字符 (CSI sequences)
-  // ESC] 开头的 OSC sequences，以 BEL 结尾
-
-  const ansiRegex = new RegExp(`${ESC}\\[[0-9;]*[a-zA-Z]|${ESC}\\][^${BEL}]*${BEL}`, 'g');
-
-  // 移除回车符（用于进度条覆盖），保留换行符
-  return str
-    .replace(ansiRegex, '')
-    .replace(/\r(?!\n)/g, '\n'); // 单独的 \r 替换为 \n 以保持可读性
-}
-
-// 全局 WebContainer 单例，避免 HMR 或 Strict Mode 导致重复创建
-let globalWebContainerInstance: WebContainer | null = null;
-let globalBootPromise: Promise<WebContainer> | null = null;
-
-export function useWebContainer() {
-  const webcontainerRef = useRef<WebContainer | null>(globalWebContainerInstance);
+  // 状态
+  const [status, setStatus] = useState<ContainerStatus>('idle');
   const [url, setUrl] = useState<string | null>(null);
-  const [status, setStatus] = useState<'idle' | 'booting' | 'mounting' | 'installing' | 'running' | 'ready' | 'error'>('idle');
   const [output, setOutput] = useState<string>('');
-  const [refreshKey, setRefreshKey] = useState(0); // 用于强制刷新 iframe
-  const devProcessRef = useRef<any>(null);
-  const isServerRunningRef = useRef(false);
+  const [metrics, setMetrics] = useState<BootMetrics | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const appendOutput = (data: string) => {
-    // 过滤 ANSI 转义序列后再添加到输出
-    const cleanData = stripAnsi(data);
-    setOutput(prev => prev + cleanData);
-  };
+  // Refs
+  const managerRef = useRef<WebContainerManager | null>(null);
+  const prevTreeRef = useRef<FileTree | null>(null);
+  const isFirstMountRef = useRef(true);
 
-  const boot = useCallback(async () => {
-    // 如果已经有全局实例，直接使用
-    if (globalWebContainerInstance) {
-      webcontainerRef.current = globalWebContainerInstance;
-      return globalWebContainerInstance;
-    }
-
-    // 如果正在启动，等待启动完成
-    if (globalBootPromise) {
-      const instance = await globalBootPromise;
-      webcontainerRef.current = instance;
-      return instance;
-    }
-
-    // 创建新的启动 Promise
-    globalBootPromise = (async () => {
-      try {
-        setStatus('booting');
-        const instance = await WebContainer.boot();
-        globalWebContainerInstance = instance;
-        webcontainerRef.current = instance;
-        setStatus('idle');
-        console.log('WebContainer booted');
-        return instance;
-      } catch (e) {
-        console.error('WebContainer boot failed', e);
-        setStatus('error');
-        appendOutput(`\nBoot error: ${e instanceof Error ? e.message : String(e)}`);
-        globalBootPromise = null;
-        throw e;
-      }
-    })();
-
-    return globalBootPromise;
-  }, []);
-
+  // 初始化 Manager
   useEffect(() => {
-    boot();
+    const manager = getWebContainerManager({
+      enablePreBoot: autoPreBoot,
+      enableDependencyCache: enableCache,
+    });
+    managerRef.current = manager;
+
+    // 注册事件监听
+    const handleStatusChange = (newStatus: ContainerStatus) => {
+      setStatus(newStatus);
+      onStatusChange?.(newStatus);
+    };
+
+    const handleOutput = (data: string) => {
+      setOutput(prev => prev + data);
+      onOutput?.(data);
+    };
+
+    const handleServerReady = (serverUrl: string) => {
+      setUrl(serverUrl);
+      onServerReady?.(serverUrl);
+    };
+
+    const handleError = (error: Error) => {
+      onError?.(error);
+    };
+
+    const handleMetrics = (newMetrics: BootMetrics) => {
+      setMetrics(newMetrics);
+    };
+
+    manager.on('status-change', handleStatusChange);
+    manager.on('output', handleOutput);
+    manager.on('server-ready', handleServerReady);
+    manager.on('error', handleError);
+    manager.on('metrics', handleMetrics);
+
+    // 预启动
+    if (autoPreBoot) {
+      manager.preBoot();
+    }
+
+    // 清理
+    return () => {
+      manager.off('status-change', handleStatusChange);
+      manager.off('output', handleOutput);
+      manager.off('server-ready', handleServerReady);
+      manager.off('error', handleError);
+      manager.off('metrics', handleMetrics);
+    };
+  }, [autoPreBoot, enableCache, onStatusChange, onOutput, onError, onServerReady]);
+
+  /**
+   * 挂载文件并启动（首次）
+   */
+  const mount = useCallback(async (files: FileTree): Promise<void> => {
+    const manager = managerRef.current;
+    if (!manager) return;
+
+    setOutput('');
+    isFirstMountRef.current = false;
+    prevTreeRef.current = files;
+
+    await manager.mountAndRun(files);
   }, []);
 
   /**
-   * 检测 package.json 依赖是否变化
+   * 更新文件（增量更新）
    */
-  const hasDependencyChanged = useCallback((oldTree: any, newTree: any): boolean => {
-    try {
-      const oldPkg = oldTree?.['package.json']?.file?.contents;
-      const newPkg = newTree?.['package.json']?.file?.contents;
-      if (!oldPkg || !newPkg) return true;
+  const update = useCallback(async (files: FileTree, previousFiles?: FileTree): Promise<void> => {
+    const manager = managerRef.current;
+    if (!manager) return;
 
-      const oldDeps = JSON.parse(oldPkg).dependencies || {};
-      const newDeps = JSON.parse(newPkg).dependencies || {};
+    const prev = previousFiles || prevTreeRef.current;
+    prevTreeRef.current = files;
 
-      // 检查是否有新增或修改的依赖
-      for (const key of Object.keys(newDeps)) {
-        if (oldDeps[key] !== newDeps[key]) {
-          return true;
-        }
-      }
-      return false;
-    } catch {
-      return true; // 解析失败则重新安装
+    // 如果是首次，走完整挂载流程
+    if (isFirstMountRef.current) {
+      return mount(files);
     }
+
+    await manager.updateAndRefresh(files, prev || undefined);
+
+    // 触发刷新
+    setRefreshKey(k => k + 1);
+  }, [mount]);
+
+  /**
+   * 强制刷新 iframe
+   */
+  const refresh = useCallback((): void => {
+    setRefreshKey(k => k + 1);
   }, []);
 
   /**
-   * 首次挂载并启动开发服务器
+   * 重启容器
    */
-  const mountAndRun = useCallback(async (files: any) => {
-    if (!webcontainerRef.current) {
-      await boot();
+  const restart = useCallback(async (): Promise<void> => {
+    const manager = managerRef.current;
+    if (!manager) return;
+
+    await manager.destroy();
+    setOutput('');
+    setUrl(null);
+    setStatus('idle');
+    isFirstMountRef.current = true;
+
+    if (prevTreeRef.current) {
+      await mount(prevTreeRef.current);
     }
-    if (!webcontainerRef.current) return;
-
-    try {
-      setOutput('');
-      setStatus('mounting');
-      await webcontainerRef.current.mount(files);
-
-      setStatus('installing');
-      appendOutput('Installing dependencies...\n');
-      const installProcess = await webcontainerRef.current.spawn('npm', ['install']);
-
-      installProcess.output.pipeTo(new WritableStream({
-        write(data) {
-          appendOutput(data);
-        }
-      }));
-
-      const installCode = await installProcess.exit;
-      if (installCode !== 0) {
-        throw new Error(`Installation failed with code ${installCode}`);
-      }
-
-      setStatus('running');
-      appendOutput('Starting dev server...\n');
-      const devProcess = await webcontainerRef.current.spawn('npm', ['run', 'dev']);
-      devProcessRef.current = devProcess;
-
-      devProcess.output.pipeTo(new WritableStream({
-        write(data) {
-          appendOutput(data);
-        }
-      }));
-
-      webcontainerRef.current.on('server-ready', (port, url) => {
-        console.log(`Server ready at ${url} on port ${port}`);
-        setUrl(url);
-        setStatus('ready');
-        isServerRunningRef.current = true;
-      });
-    } catch (e) {
-      console.error('WebContainer run failed', e);
-      setStatus('error');
-      appendOutput(`\nRun error: ${e instanceof Error ? e.message : String(e)}`);
-    }
-  }, [boot]);
+  }, [mount]);
 
   /**
-   * 增量更新文件 - 用于多轮对话时的代码更新
-   * 利用 Vite HMR 自动检测变化并刷新
+   * 执行命令
    */
-  const remount = useCallback(async (files: any, previousTree?: any) => {
-    if (!webcontainerRef.current) {
-      // 如果容器未启动，则走首次挂载流程
-      return mountAndRun(files);
+  const exec = useCallback(async (command: string, args: string[] = []): Promise<ExecResult> => {
+    const manager = managerRef.current;
+    if (!manager) {
+      return { exitCode: 1, output: 'Manager not initialized' };
     }
+    return manager.exec(command, args);
+  }, []);
 
-    try {
-      setStatus('mounting');
-      appendOutput('\n--- Updating project files ---\n');
+  /**
+   * 写入文件
+   */
+  const writeFile = useCallback(async (path: string, content: string): Promise<void> => {
+    const manager = managerRef.current;
+    if (!manager) return;
+    await manager.writeFile(path, content);
+  }, []);
 
-      // 挂载新文件，Vite HMR 会自动检测变化
-      await webcontainerRef.current.mount(files);
+  /**
+   * 读取文件
+   */
+  const readFile = useCallback(async (path: string): Promise<string> => {
+    const manager = managerRef.current;
+    if (!manager) return '';
+    return manager.readFile(path);
+  }, []);
 
-      // 检查依赖是否变化，如果变化则重新安装
-      if (previousTree && hasDependencyChanged(previousTree, files)) {
-        setStatus('installing');
-        appendOutput('Dependencies changed, reinstalling...\n');
-        const installProcess = await webcontainerRef.current.spawn('npm', ['install']);
+  /**
+   * 智能启动 - 优先从 OPFS 缓存恢复，实现"秒开"
+   * @param files - 文件树
+   * @param projectId - 项目标识（用于缓存 key）
+   */
+  const smartStart = useCallback(async (files: FileTree, projectId: string): Promise<void> => {
+    const manager = managerRef.current;
+    if (!manager) return;
 
-        installProcess.output.pipeTo(new WritableStream({
-          write(data) {
-            appendOutput(data);
-          }
-        }));
+    setOutput('');
+    isFirstMountRef.current = false;
+    prevTreeRef.current = files;
 
-        const installCode = await installProcess.exit;
-        if (installCode !== 0) {
-          throw new Error(`Installation failed with code ${installCode}`);
-        }
-      }
+    await manager.smartStart(files, projectId);
+  }, []);
 
-      // 如果服务器已在运行，强制刷新 iframe
-      if (isServerRunningRef.current && url) {
-        setStatus('ready');
-        appendOutput('Files updated. Forcing page refresh...\n');
-        // 触发 iframe 强制刷新
-        setRefreshKey(prev => prev + 1);
-      } else {
-        // 服务器未运行，需要先安装依赖再启动
-        setStatus('installing');
-        appendOutput('Installing dependencies...\n');
-        const installProcess = await webcontainerRef.current.spawn('npm', ['install']);
-
-        installProcess.output.pipeTo(new WritableStream({
-          write(data) {
-            appendOutput(data);
-          }
-        }));
-
-        const installCode = await installProcess.exit;
-        if (installCode !== 0) {
-          throw new Error(`Installation failed with code ${installCode}`);
-        }
-
-        setStatus('running');
-        appendOutput('Starting dev server...\n');
-        const devProcess = await webcontainerRef.current.spawn('npm', ['run', 'dev']);
-        devProcessRef.current = devProcess;
-
-        devProcess.output.pipeTo(new WritableStream({
-          write(data) {
-            appendOutput(data);
-          }
-        }));
-
-        webcontainerRef.current.on('server-ready', (port, newUrl) => {
-          console.log(`Server ready at ${newUrl} on port ${port}`);
-          setUrl(newUrl);
-          setStatus('ready');
-          isServerRunningRef.current = true;
-        });
-      }
-    } catch (e) {
-      console.error('WebContainer remount failed', e);
-      setStatus('error');
-      appendOutput(`\nRemount error: ${e instanceof Error ? e.message : String(e)}`);
-    }
-  }, [boot, mountAndRun, hasDependencyChanged, url]);
+  /**
+   * 保存当前快照到 OPFS
+   */
+  const saveSnapshot = useCallback(async (projectId: string): Promise<void> => {
+    const manager = managerRef.current;
+    if (!manager) return;
+    await manager.saveSnapshotToOPFS(projectId);
+  }, []);
 
   return {
-    url,
+    // 状态
     status,
+    url,
     output,
+    metrics,
+    isReady: status === 'ready' && url !== null,
     refreshKey,
-    mountAndRun,
-    remount,
-    hasDependencyChanged,
-    instance: webcontainerRef.current
+
+    // 核心操作
+    mount,
+    update,
+    refresh,
+    restart,
+    smartStart,  // 新增：智能启动（OPFS 缓存）
+
+    // 高级操作
+    exec,
+    writeFile,
+    readFile,
+    saveSnapshot,  // 新增：手动保存快照
+
+    // 引用
+    instance: managerRef.current?.getContainer() || null,
   };
 }
+
+// 为向后兼容导出旧的 API 结构
+export default useWebContainer;

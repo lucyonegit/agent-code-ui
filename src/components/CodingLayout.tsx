@@ -20,6 +20,7 @@ interface CodingLayoutProps {
   generatedFiles: GeneratedFile[];
   generatedTree?: unknown;
   codeSummary?: string;
+  projectId?: string;  // 新增：项目 ID
   onSend: (message: string) => void;
   onCancel: () => void;
 }
@@ -33,6 +34,7 @@ export function CodingLayout({
   generatedFiles,
   generatedTree,
   codeSummary,
+  projectId,
   onSend,
   onCancel
 }: CodingLayoutProps) {
@@ -101,6 +103,7 @@ export function CodingLayout({
           files={generatedFiles} 
           tree={generatedTree} 
           summary={codeSummary}
+          projectId={projectId}
         />
       </div>
     </div>

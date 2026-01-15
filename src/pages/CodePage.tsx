@@ -80,6 +80,7 @@ export function CodePage() {
           generatedFiles={generatedFiles}
           generatedTree={generatedTree}
           codeSummary={codeSummary}
+          projectId={projectId}
           onSend={handleSend}
           onCancel={cancel}
         />
