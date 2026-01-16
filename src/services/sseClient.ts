@@ -301,29 +301,46 @@ export interface ProjectInfo {
 
 export interface ProjectDetail extends ProjectInfo {
   tree: unknown;
-  conversation?: StoredMessage[];
+  conversation?: ConversationEvent[];
 }
 
 /**
- * 存储的消息类型（与后端和 ChatItem 保持一致）
+ * 会话事件类型（与后端 ConversationEvent 保持一致）
  */
-export interface StoredMessage {
+export type ConversationEventType =
+  | 'user'
+  | 'thought'
+  | 'normal_message'
+  | 'tool_call'
+  | 'tool_result'
+  | 'final_result'
+  | 'error'
+  | 'artifact_event'
+  | 'plan_update';
+
+/**
+ * 统一的会话事件接口（与后端保持一致）
+ */
+export interface ConversationEvent {
   id: string;
-  type: 'user' | 'thought' | 'normal_message' | 'tool_call' | 'tool_result' | 'final_result' | 'error' | 'artifact_event' | 'plan_update';
-  content: string;
+  type: ConversationEventType;
   timestamp: number;
-  // 工具调用相关 (type === 'tool_call' 时使用)
+  // 内容字段（user, thought, normal_message, final_result 使用）
+  content?: string;
+  // 工具调用相关 (type === 'tool_call' | 'tool_result' 时使用)
   toolCallId?: string;
   toolName?: string;
   args?: Record<string, unknown>;
   result?: string;
   success?: boolean;
   duration?: number;
-  // 流式状态
-  isStreaming?: boolean;
-  isComplete?: boolean;
-  // 计划相关
+  // 计划相关 (type === 'plan_update' 时使用)
   plan?: Plan;
+  // Artifact 相关 (type === 'artifact_event' 时使用)
+  artifacts?: ArtifactInfo[];
+  mode?: 'react' | 'plan';
+  // 错误相关 (type === 'error' 时使用)
+  message?: string;
 }
 
 /**
@@ -420,7 +437,7 @@ export interface ConversationListItem {
 
 export interface ConversationDetail {
   conversationId: string;
-  messages: StoredMessage[];
+  events: ConversationEvent[];
   metadata: {
     createdAt: string;
     updatedAt: string;

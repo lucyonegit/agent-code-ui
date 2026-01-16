@@ -22,7 +22,7 @@ import {
   getTools,
   getReactConversation,
   getPlannerConversation,
-  type StoredMessage,
+  type ConversationEvent,
 } from '../services/sseClient';
 
 export function useChat() {
@@ -425,37 +425,37 @@ export function useChat() {
     streamingFinalAnswerRef.current.clear();
   }, []);
 
-  // 将存储的消息转换为 ChatItem，合并 tool_result 到 tool_call
-  const convertStoredMessagesToChatItems = useCallback((
-    messages: StoredMessage[],
+  // 将存储的事件转换为 ChatItem，合并 tool_result 到 tool_call
+  const convertEventsToChatItems = useCallback((
+    events: ConversationEvent[],
     conversationId?: string,
     mode?: 'react' | 'plan'
   ): ChatItem[] => {
     const chatItems: ChatItem[] = [];
-    const toolResultMap = new Map<string, StoredMessage>();
+    const toolResultMap = new Map<string, ConversationEvent>();
 
     // 先收集所有 tool_result
-    for (const msg of messages) {
-      if (msg.type === 'tool_result' && msg.toolCallId) {
-        toolResultMap.set(msg.toolCallId, msg);
+    for (const event of events) {
+      if (event.type === 'tool_result' && event.toolCallId) {
+        toolResultMap.set(event.toolCallId, event);
       }
     }
 
-    // 转换消息，合并 tool_result 到 tool_call
-    for (const msg of messages) {
+    // 转换事件，合并 tool_result 到 tool_call
+    for (const event of events) {
       // 跳过 tool_result，因为会合并到 tool_call
-      if (msg.type === 'tool_result') continue;
+      if (event.type === 'tool_result') continue;
 
-      if (msg.type === 'tool_call' && msg.toolCallId) {
-        const toolResult = toolResultMap.get(msg.toolCallId);
+      if (event.type === 'tool_call' && event.toolCallId) {
+        const toolResult = toolResultMap.get(event.toolCallId);
         chatItems.push({
-          id: msg.id,
+          id: event.id,
           type: 'tool_call',
-          content: msg.content,
-          timestamp: msg.timestamp,
-          toolCallId: msg.toolCallId,
-          toolName: msg.toolName,
-          args: msg.args,
+          content: event.toolName || '',
+          timestamp: event.timestamp,
+          toolCallId: event.toolCallId,
+          toolName: event.toolName,
+          args: event.args,
           // 合并 tool_result 的字段
           result: toolResult?.result,
           success: toolResult?.success,
@@ -463,44 +463,39 @@ export function useChat() {
           isStreaming: false,
           isComplete: true,
         });
-      } else if (msg.type === 'artifact_event') {
-        // 解析存储的 artifact_event
-        try {
-          const artifacts = JSON.parse(msg.content);
-          chatItems.push({
-            id: msg.id,
-            type: 'artifact',
-            content: '',
-            timestamp: msg.timestamp,
-            artifacts,
-            conversationId: conversationId,
-            mode: mode,
-          });
-        } catch (e) {
-          console.error('Failed to parse artifacts from message content', e);
-        }
-      } else if (msg.type === 'plan_update' && msg.plan) {
+      } else if (event.type === 'artifact_event') {
+        // 新版 artifact_event 直接包含 artifacts 数组
         chatItems.push({
-          id: msg.id,
+          id: event.id,
+          type: 'artifact',
+          content: '',
+          timestamp: event.timestamp,
+          artifacts: event.artifacts,
+          conversationId: conversationId,
+          mode: event.mode || mode,
+        });
+      } else if (event.type === 'plan_update' && event.plan) {
+        chatItems.push({
+          id: event.id,
           type: 'plan',
-          content: msg.content,
-          timestamp: msg.timestamp,
-          plan: msg.plan,
+          content: event.plan.goal || '',
+          timestamp: event.timestamp,
+          plan: event.plan,
+        });
+      } else if (event.type === 'error') {
+        chatItems.push({
+          id: event.id,
+          type: 'error',
+          content: event.message || '',
+          timestamp: event.timestamp,
         });
       } else {
+        // user, thought, normal_message, final_result
         chatItems.push({
-          id: msg.id,
-          type: msg.type as ChatItem['type'],
-          content: msg.content,
-          timestamp: msg.timestamp,
-          toolCallId: msg.toolCallId,
-          toolName: msg.toolName,
-          args: msg.args,
-          result: msg.result,
-          success: msg.success,
-          duration: msg.duration,
-          isStreaming: msg.isStreaming,
-          isComplete: msg.isComplete,
+          id: event.id,
+          type: event.type as ChatItem['type'],
+          content: event.content || '',
+          timestamp: event.timestamp,
         });
       }
     }
@@ -509,7 +504,7 @@ export function useChat() {
   }, []);
 
   // 加载已保存的项目
-  const loadProject = useCallback((tree: unknown, id: string, name: string, conversation?: StoredMessage[]) => {
+  const loadProject = useCallback((tree: unknown, id: string, name: string, conversation?: ConversationEvent[]) => {
     setGeneratedTree(tree);
     setProjectId(id);
     setCodeSummary(`已加载项目: ${name}`);
@@ -519,29 +514,29 @@ export function useChat() {
 
     // 恢复对话历史
     if (conversation && conversation.length > 0) {
-      const chatItems = convertStoredMessagesToChatItems(conversation);
+      const chatItems = convertEventsToChatItems(conversation);
       setMessages(chatItems);
     } else {
       setMessages([]);
     }
-  }, [convertStoredMessagesToChatItems]);
+  }, [convertEventsToChatItems]);
 
   // 加载推理模式会话
   const loadReactConversation = useCallback(async (id: string) => {
     const conversation = await getReactConversation(id);
     if (conversation) {
       setConversationId(id);
-      const chatItems = convertStoredMessagesToChatItems(conversation.messages, id, 'react');
+      const chatItems = convertEventsToChatItems(conversation.events, id, 'react');
       setMessages(chatItems);
     }
-  }, [convertStoredMessagesToChatItems]);
+  }, [convertEventsToChatItems]);
 
   // 加载规划模式会话
   const loadPlannerConversation = useCallback(async (id: string) => {
     const data = await getPlannerConversation(id);
     if (data.conversation) {
       setPlannerConversationId(id);
-      const chatItems = convertStoredMessagesToChatItems(data.conversation.messages, id, 'plan');
+      const chatItems = convertEventsToChatItems(data.conversation.events, id, 'plan');
 
       // 检查转换后的消息中是否已经包含计划卡片
       const hasPlanInMessages = chatItems.some(m => m.type === 'plan');
@@ -560,7 +555,7 @@ export function useChat() {
         setMessages(chatItems);
       }
     }
-  }, [convertStoredMessagesToChatItems]);
+  }, [convertEventsToChatItems]);
 
   const sendPlanner = useCallback((goal: string) => {
     if (!goal.trim() || isLoading) return;
