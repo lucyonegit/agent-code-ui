@@ -250,9 +250,6 @@ export type AgentEvent =
   | StepCompleteEvent
   | ArtifactEvent
   // 向后兼容
-  | StreamEvent
-  | ActionEvent
-  | ObservationEvent
   | FinalAnswerEvent
   | DoneEvent
   | PlanUpdateEvent

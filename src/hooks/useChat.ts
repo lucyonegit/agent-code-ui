@@ -194,57 +194,6 @@ export function useChat() {
         break;
       }
 
-      // === 向后兼容: stream 事件 ===
-      case 'stream': {
-        const existing = streamingThoughtRef.current.get(event.thoughtId);
-        if (existing) {
-          existing.content += event.chunk;
-          setMessages(prev =>
-            prev.map(m => m.id === existing.id ? { ...existing } : m)
-          );
-        } else {
-          const newThought: ChatItem = {
-            id: event.thoughtId,
-            type: 'thought',
-            content: event.chunk,
-            isStreaming: true,
-            timestamp: Date.now(),
-          };
-          streamingThoughtRef.current.set(event.thoughtId, newThought);
-          setMessages(prev => [...prev, newThought]);
-        }
-        break;
-      }
-
-      // === 向后兼容: action 事件 ===
-      case 'action': {
-        const item: ChatItem = {
-          id: `tool_${Date.now()}`,
-          type: 'tool_call',
-          content: event.toolName,
-          toolName: event.toolName,
-          args: event.args,
-          timestamp: Date.now(),
-        };
-        setMessages(prev => [...prev, item]);
-        break;
-      }
-
-      // === 向后兼容: observation 事件 ===
-      case 'observation': {
-        setMessages(prev => {
-          const lastToolIndex = [...prev].reverse().findIndex(m => m.type === 'tool_call');
-          if (lastToolIndex !== -1) {
-            const index = prev.length - 1 - lastToolIndex;
-            const updated = [...prev];
-            updated[index] = { ...updated[index], result: event.content, success: true };
-            return updated;
-          }
-          return prev;
-        });
-        break;
-      }
-
       // === 向后兼容: final_answer 事件 ===
       case 'final_answer': {
         streamingThoughtRef.current.clear();

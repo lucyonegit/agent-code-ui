@@ -10,7 +10,7 @@ import { useChat } from '@/hooks/useChat';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft } from 'lucide-react';
-import type { StoredMessage } from '@/services/sseClient';
+import type { ConversationEvent } from '@/services/sseClient';
 
 export function CodePage() {
   const navigate = useNavigate();
@@ -33,8 +33,14 @@ export function CodePage() {
     sendCoding(input);
   };
 
-  const handleLoadProject = useCallback((tree: unknown, id: string, name: string, conversation?: StoredMessage[]) => {
-    loadProject(tree, id, name, conversation);
+  const handleLoadProject = useCallback(
+    (
+      tree: unknown,
+      id: string,
+      name: string,
+      conversation?: ConversationEvent[]
+    ) => {
+      loadProject(tree, id, name, conversation);
   }, [loadProject]);
 
   return (
