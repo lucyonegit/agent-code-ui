@@ -17,7 +17,6 @@ export interface SSEClientOptions {
  */
 export function sendMessage(
   input: string,
-  tools: string[],
   conversationId: string | undefined,
   options: SSEClientOptions & { onConversationId?: (id: string) => void }
 ): () => void {
@@ -30,7 +29,7 @@ export function sendMessage(
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ input, tools, conversationId }),
+        body: JSON.stringify({ input, conversationId }),
         signal: abortController.signal,
       });
 
@@ -119,7 +118,6 @@ export async function getTools(): Promise<{ name: string; description: string }[
  */
 export function sendPlannerMessage(
   goal: string,
-  tools: string[],
   conversationId: string | undefined,
   options: SSEClientOptions & { onConversationId?: (id: string) => void }
 ): () => void {
@@ -132,7 +130,7 @@ export function sendPlannerMessage(
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ goal, tools, conversationId }),
+        body: JSON.stringify({ goal, conversationId }),
         signal: abortController.signal,
       });
 

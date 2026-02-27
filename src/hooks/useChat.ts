@@ -5,11 +5,10 @@
  * Plus Coding-specific events: bdd_generated, architecture_generated, code_generated
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type {
   ChatItem,
   AgentEvent,
-  ToolInfo,
   BDDFeature,
   GeneratedFile,
   ArchitectureFile,
@@ -19,7 +18,6 @@ import {
   sendMessage,
   sendPlannerMessage,
   sendCodingMessage,
-  getTools,
   getReactConversation,
   getPlannerConversation,
   type ConversationEvent,
@@ -28,7 +26,6 @@ import {
 export function useChat() {
   const [messages, setMessages] = useState<ChatItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [tools, setTools] = useState<ToolInfo[]>([]);
 
   // 会话 ID（用于多轮对话）
   const [conversationId, setConversationId] = useState<string | undefined>(undefined);
@@ -47,10 +44,6 @@ export function useChat() {
   const toolCallMapRef = useRef<Map<string, ChatItem>>(new Map());
   const streamingFinalAnswerRef = useRef<Map<string, ChatItem>>(new Map());
 
-  // Fetch available tools on mount
-  useEffect(() => {
-    getTools().then(setTools);
-  }, []);
 
   const handleEvent = useCallback((event: AgentEvent) => {
     switch (event.type) {
@@ -329,8 +322,7 @@ export function useChat() {
     streamingThoughtRef.current.clear();
     toolCallMapRef.current.clear();
 
-    const toolNames = tools.map(t => t.name);
-    abortRef.current = sendMessage(input, toolNames, conversationId, {
+    abortRef.current = sendMessage(input, conversationId, {
       onEvent: handleEvent,
       onConversationId: (id) => {
         setConversationId(id);
@@ -350,7 +342,7 @@ export function useChat() {
         setMessages(prev => [...prev, errorItem]);
       },
     });
-  }, [isLoading, tools, handleEvent, conversationId]);
+  }, [isLoading, handleEvent, conversationId]);
 
   const cancel = useCallback(() => {
     if (abortRef.current) {
@@ -519,8 +511,7 @@ export function useChat() {
     setIsLoading(true);
     streamingThoughtRef.current.clear();
 
-    const toolNames = tools.map(t => t.name);
-    abortRef.current = sendPlannerMessage(goal, toolNames, plannerConversationId, {
+    abortRef.current = sendPlannerMessage(goal, plannerConversationId, {
       onEvent: handleEvent,
       onConversationId: (id) => {
         setPlannerConversationId(id);
@@ -540,7 +531,7 @@ export function useChat() {
         setMessages(prev => [...prev, errorItem]);
       },
     });
-  }, [isLoading, tools, handleEvent, plannerConversationId]);
+  }, [isLoading, handleEvent, plannerConversationId]);
 
   const sendCoding = useCallback((requirement: string) => {
     if (!requirement.trim() || isLoading) return;
@@ -587,7 +578,7 @@ export function useChat() {
     conversationId,
     plannerConversationId,
     isLoading,
-    tools,
+
     // Coding-specific state
     bddFeatures,
     architectureFiles,

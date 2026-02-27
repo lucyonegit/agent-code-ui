@@ -11,7 +11,6 @@ import { ArtifactPreviewSidebar } from '@/components/ArtifactPreviewSidebar';
 import { useChat } from '@/hooks/useChat';
 import { useArtifactStore } from '@/lib/useArtifactStore';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type ChatMode = 'react' | 'planner';
@@ -26,7 +25,7 @@ export function ChatPage() {
     sendPlanner,
     cancel,
     clear,
-    tools,
+
     loadReactConversation,
     loadPlannerConversation,
   } = useChat();
@@ -80,11 +79,7 @@ export function ChatPage() {
           </Tabs>
 
           <div className="flex items-center gap-2">
-            {tools.length > 0 && (
-              <Badge variant="secondary">
-                {tools.length} 个工具
-              </Badge>
-            )}
+
             {messages.length > 0 && (
               <Button variant="ghost" size="sm" onClick={clear}>
                 清除

@@ -8,7 +8,6 @@ import { CodingLayout } from '@/components/CodingLayout';
 import { ProjectSelector } from '@/components/ProjectSelector';
 import { useChat } from '@/hooks/useChat';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { ArrowLeft } from 'lucide-react';
 import type { ConversationEvent } from '@/services/sseClient';
 
@@ -20,7 +19,7 @@ export function CodePage() {
     sendCoding,
     cancel,
     clear,
-    tools,
+
     bddFeatures,
     generatedFiles,
     generatedTree,
@@ -64,11 +63,7 @@ export function CodePage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {tools.length > 0 && (
-            <Badge variant="secondary">
-              {tools.length} 个工具
-            </Badge>
-          )}
+
           {messages.length > 0 && (
             <Button variant="ghost" size="sm" onClick={clear}>
               清除
