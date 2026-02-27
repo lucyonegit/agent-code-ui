@@ -19,6 +19,7 @@ export const ArtifactPreviewSidebar: React.FC = () => {
     document.addEventListener('mouseup', stopResizing);
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
+    document.body.classList.add('is-resizing');
   }, []);
 
   const stopResizing = useCallback(() => {
@@ -27,6 +28,7 @@ export const ArtifactPreviewSidebar: React.FC = () => {
     document.removeEventListener('mouseup', stopResizing);
     document.body.style.cursor = 'default';
     document.body.style.userSelect = 'auto';
+    document.body.classList.remove('is-resizing');
   }, []);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
