@@ -9,6 +9,7 @@ import { PlanCard } from './PlanCard';
 import { BDDCard } from './BDDCard';
 import { CodeTreeCard } from './CodeTreeCard';
 import { ArtifactCard } from './ArtifactCard';
+import { AgentPauseCard } from './AgentPauseCard';
 import './ChatContainer.css';
 
 interface ChatContainerProps {
@@ -77,6 +78,14 @@ export function ChatContainer({ messages, isLoading, onSelectPrompt }: ChatConta
             conversationId={item.conversationId}
             mode={item.mode}
             artifacts={item.artifacts}
+          />
+        ) : null;
+      case 'agent_pause':
+        return item.pauseSessionId && item.pausePayload ? (
+          <AgentPauseCard
+            key={item.id}
+            sessionId={item.pauseSessionId}
+            payload={item.pausePayload}
           />
         ) : null;
       case 'error':

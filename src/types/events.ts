@@ -84,6 +84,40 @@ export interface FinalAnswerStreamEvent {
 }
 
 // ============================================================================
+// Agent 通用暂停事件类型
+// ============================================================================
+
+/**
+ * Agent 暂停事件 — payload 不透明，由业务层解读
+ */
+export interface AgentPauseEvent {
+  type: 'agent_pause';
+  sessionId: string;
+  payload: Record<string, any>;
+  timestamp: number;
+}
+
+/**
+ * Agent 恢复事件
+ */
+export interface AgentResumeEvent {
+  type: 'agent_resume';
+  sessionId: string;
+  timestamp: number;
+}
+
+/**
+ * 澄清问题类型（业务层类型，用于解读 pause payload）
+ */
+export interface ClarificationQuestion {
+  id: string;
+  question: string;
+  type: 'text' | 'single_choice' | 'multi_choice';
+  options?: string[];
+  placeholder?: string;
+}
+
+// ============================================================================
 // Artifact 事件类型
 // ============================================================================
 
@@ -259,7 +293,7 @@ export type AgentEvent =
 // UI 消息类型
 // ============================================================================
 
-export type MessageType = 'user' | 'thought' | 'normal_message' | 'tool_call' | 'final_result' | 'error' | 'plan' | 'bdd' | 'architecture' | 'codegen' | 'artifact';
+export type MessageType = 'user' | 'thought' | 'normal_message' | 'tool_call' | 'final_result' | 'error' | 'plan' | 'bdd' | 'architecture' | 'codegen' | 'artifact' | 'agent_pause';
 
 export interface ChatItem {
   id: string;
@@ -287,6 +321,9 @@ export interface ChatItem {
   artifacts?: ArtifactInfo[];
   conversationId?: string;
   mode?: 'react' | 'plan';
+  // Agent Pause 相关
+  pauseSessionId?: string;
+  pausePayload?: Record<string, any>;
 }
 
 export interface ToolInfo {
@@ -382,6 +419,8 @@ export type CodingEvent =
   | ArchitectureGeneratedEvent
   | CodeGeneratedEvent
   | CodingDoneEvent
+  | AgentPauseEvent
+  | AgentResumeEvent
   | ThoughtEvent
   | NormalMessageEvent
   | ToolCallEvent

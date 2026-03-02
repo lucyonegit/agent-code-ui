@@ -285,6 +285,32 @@ export function sendCodingMessage(
   return () => abortController.abort();
 }
 
+/**
+ * 恢复已暂停的 Agent（通用端点）
+ */
+export async function submitAgentResume(
+  sessionId: string,
+  payload: Record<string, any>
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await fetch(`${API_BASE}/api/agent/resume`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ sessionId, payload }),
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      return { success: false, error: data.message || 'Unknown error' };
+    }
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return { success: false, error: message };
+  }
+}
+
 // ============================================================================
 // 项目管理 API
 // ============================================================================

@@ -304,6 +304,32 @@ export function useChat() {
       return;
     }
 
+    // 处理 agent_pause 事件（通用暂停机制）
+    if (anyEvent.type === 'agent_pause') {
+      const item: ChatItem = {
+        id: `pause_${anyEvent.sessionId}`,
+        type: 'agent_pause',
+        content: '',
+        timestamp: anyEvent.timestamp,
+        pauseSessionId: anyEvent.sessionId,
+        pausePayload: anyEvent.payload,
+      };
+      setMessages(prev => [...prev, item]);
+      return;
+    }
+
+    // 处理 agent_resume 事件
+    if (anyEvent.type === 'agent_resume') {
+      const item: ChatItem = {
+        id: `resume_${Date.now()}`,
+        type: 'normal_message',
+        content: `✅ 需求已完善，开始为您开发...`,
+        timestamp: anyEvent.timestamp,
+      };
+      setMessages(prev => [...prev, item]);
+      return;
+    }
+
     // 其他事件走普通处理
     handleEvent(event);
   }, [handleEvent]);

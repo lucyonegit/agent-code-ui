@@ -1,0 +1,184 @@
+/* AgentPauseCard 样式 */
+
+.agent-pause-card {
+  margin: 8px 0;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid hsl(var(--primary) / 0.25);
+  background: hsl(var(--primary) / 0.04);
+  animation: agent-pause-slide-in 0.3s ease-out;
+}
+
+.agent-pause-card.agent-pause-submitted {
+  border-color: hsl(var(--primary) / 0.1);
+  background: hsl(var(--muted) / 0.3);
+  opacity: 0.85;
+}
+
+@keyframes agent-pause-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.agent-pause-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: hsl(var(--primary));
+  margin-bottom: 14px;
+}
+
+.agent-pause-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.agent-pause-question {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.agent-pause-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+  line-height: 1.4;
+}
+
+.agent-pause-input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  border-radius: 8px;
+  border: 1px solid hsl(var(--input));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  outline: none;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.agent-pause-input:focus {
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+}
+
+.agent-pause-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.agent-pause-input::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+.agent-pause-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.agent-pause-option {
+  padding: 5px 12px;
+  font-size: 12px;
+  border-radius: 16px;
+  border: 1px solid hsl(var(--input));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.agent-pause-option:hover:not(:disabled) {
+  border-color: hsl(var(--primary) / 0.5);
+  background: hsl(var(--primary) / 0.06);
+}
+
+.agent-pause-option.selected {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.12);
+  color: hsl(var(--primary));
+  font-weight: 500;
+}
+
+.agent-pause-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.agent-pause-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.agent-pause-skip {
+  font-size: 11.5px;
+  color: hsl(var(--muted-foreground));
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+
+.agent-pause-skip:hover:not(:disabled) {
+  color: hsl(var(--foreground));
+  background: hsl(var(--muted) / 0.5);
+}
+
+.agent-pause-skip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.agent-pause-submit {
+  font-size: 12px;
+}
+
+.agent-pause-summary {
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+}
+
+.agent-pause-summary ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.agent-pause-summary li {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.agent-pause-q-label {
+  font-size: 11px;
+  color: hsl(var(--muted-foreground));
+}
+
+.agent-pause-a-label {
+  font-size: 12px;
+  color: hsl(var(--foreground));
+  font-weight: 500;
+}
