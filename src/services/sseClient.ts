@@ -514,7 +514,12 @@ export async function deleteReactConversation(conversationId: string): Promise<{
     if (!response.ok) {
       return { success: false };
     }
-    return await response.json();
+    // 兼容 204 No Content 响应
+    if (response.status === 204) {
+      return { success: true };
+    }
+    const text = await response.text();
+    return text ? JSON.parse(text) : { success: true };
   } catch (error) {
     console.error('Failed to delete react conversation:', error);
     return { success: false };
@@ -567,7 +572,12 @@ export async function deletePlannerConversation(conversationId: string): Promise
     if (!response.ok) {
       return { success: false };
     }
-    return await response.json();
+    // 兼容 204 No Content 响应
+    if (response.status === 204) {
+      return { success: true };
+    }
+    const text = await response.text();
+    return text ? JSON.parse(text) : { success: true };
   } catch (error) {
     console.error('Failed to delete planner conversation:', error);
     return { success: false };

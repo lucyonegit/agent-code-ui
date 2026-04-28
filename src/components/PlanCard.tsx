@@ -36,7 +36,7 @@ export function PlanCard({ plan }: PlanCardProps) {
         </div>
 
         <div className="space-y-2">
-          {plan.steps.map((step, index) => (
+          {(plan.steps || []).map((step, index) => (
             <div 
               key={step.id} 
               className="flex gap-2 p-2 rounded-md border"

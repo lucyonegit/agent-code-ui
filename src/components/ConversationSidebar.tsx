@@ -2,8 +2,8 @@
  * 会话历史侧边栏组件
  */
 
-import { useState, useEffect } from 'react';
-import { Plus, Trash2, MessageSquare } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, Trash2, MessageSquare, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -30,6 +30,8 @@ export function ConversationSidebar({
 }: ConversationSidebarProps) {
   const [conversations, setConversations] = useState<ConversationListItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 加载会话列表
   const loadConversations = async () => {
@@ -50,21 +52,39 @@ export function ConversationSidebar({
     loadConversations();
   }, [mode]);
 
-  // 删除会话
+  // 删除会话（二次确认）
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    const confirm = window.confirm('确定要删除这个会话吗？');
-    if (!confirm) return;
 
-    const result = mode === 'react'
-      ? await deleteReactConversation(id)
-      : await deletePlannerConversation(id);
-    
-    if (result.success) {
-      setConversations(prev => prev.filter(c => c.conversationId !== id));
-      if (currentConversationId === id) {
-        onNewConversation();
+    if (confirmingId !== id) {
+      // 第一次点击：进入确认状态
+      if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
+      setConfirmingId(id);
+      confirmTimerRef.current = setTimeout(() => {
+        setConfirmingId(prev => (prev === id ? null : prev));
+      }, 3000);
+      return;
+    }
+
+    // 第二次点击：执行删除
+    if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current);
+    setConfirmingId(null);
+
+    try {
+      const result = mode === 'react'
+        ? await deleteReactConversation(id)
+        : await deletePlannerConversation(id);
+
+      if (result.success) {
+        setConversations(prev => prev.filter(c => c.conversationId !== id));
+        if (currentConversationId === id) {
+          onNewConversation();
+        }
+      } else {
+        alert('删除失败，请稍后重试');
       }
+    } catch {
+      alert('删除失败，请稍后重试');
     }
   };
 
@@ -135,12 +155,23 @@ export function ConversationSidebar({
                   </div>
                 </div>
                 <Button
-                  variant="ghost"
+                  type="button"
+                  variant={confirmingId === conv.conversationId ? 'destructive' : 'ghost'}
                   size="icon"
-                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  className={cn(
+                    "h-7 w-7 shrink-0 transition-all",
+                    confirmingId === conv.conversationId
+                      ? "opacity-100"
+                      : "opacity-0 group-hover:opacity-100"
+                  )}
                   onClick={(e) => handleDelete(e, conv.conversationId)}
+                  title={confirmingId === conv.conversationId ? '再次点击确认删除' : '删除会话'}
                 >
-                  <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                  {confirmingId === conv.conversationId ? (
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                  ) : (
+                    <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
+                  )}
                 </Button>
               </div>
             ))
