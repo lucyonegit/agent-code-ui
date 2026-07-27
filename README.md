@@ -1,73 +1,67 @@
-# React + TypeScript + Vite
+# Agent Code UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An experimental React workspace for streaming AI-agent conversations and browser-based coding workflows.
 
-Currently, two official plugins are available:
+The project focuses on one practical question: how should a user interface make an agent's intermediate work—thought streams, Plans, tool calls, generated files, and final answers—understandable without losing the simplicity of chat?
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## What is implemented
 
-## React Compiler
+- Streaming SSE handling for thoughts, normal messages, tool calls, tool results, Plans, and final answers.
+- Separate chat and coding workspaces with light and dark themes.
+- A resizable conversation/code layout for coding tasks.
+- WebContainer-backed code execution and preview.
+- OPFS-backed browser persistence for generated project files.
+- Markdown rendering, syntax highlighting, artifact previews, and file-tree views.
+- Dedicated UI cards for Plans, tools, BDD output, architecture output, generated code, and completion results.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Runtime flow
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+Agent server (SSE)
+        │
+        ▼
+src/services/sseClient.ts
+        │
+        ▼
+src/hooks/useChat.ts
+        │
+        ├── conversation timeline
+        ├── Plan and tool state
+        └── generated files / artifacts
+                    │
+                    ▼
+          WebContainer + OPFS
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Project structure
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+src/
+  components/          Timeline, tool, Plan, artifact, and coding UI
+  hooks/               Chat streaming, theme, and WebContainer lifecycle
+  lib/webcontainer/    Browser runtime and OPFS integration
+  pages/               Chat and coding workspaces
+  services/            SSE transport
+  types/               Agent event and artifact contracts
 ```
+
+## Run locally
+
+Requirements: Node.js 20+ and a compatible agent server running at `http://localhost:3002`.
+
+```bash
+npm install
+npm run dev
+```
+
+Useful commands:
+
+```bash
+npm run build
+npm run lint
+npm run preview
+```
+
+## Status
+
+This repository is a product and interaction prototype. Its event contracts are coupled to the companion agent server, and the API base URL is currently defined in `src/services/sseClient.ts`.
